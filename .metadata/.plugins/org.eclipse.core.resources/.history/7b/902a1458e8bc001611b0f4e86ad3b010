@@ -1,0 +1,10 @@
+import bwapi.*;
+
+public class StrategyManager {
+	
+	public boolean shouldExpandNow()
+	{
+		if(MapTools)
+	}
+
+}
