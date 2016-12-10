@@ -46,7 +46,7 @@ public class Information {
 	
 	public enum ProductionLevel
 	{
-	    NONE(0), LOW (1), MEDIUM(2), HIGH(3);
+	    NONE(0), LOW (1), MEDIUM(2), HIGH(3), MASS(4);
 	    
 	    private final int num;
 		ProductionLevel(int num)

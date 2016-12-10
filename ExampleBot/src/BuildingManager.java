@@ -180,7 +180,10 @@ public class BuildingManager
 			{
 				System.out.println("Building completed: " + b.type.toString());
 				b.builderUnit.job = Information.Job.MINERALS;
-				b.base.buildingMemory.add(b.buildingUnit);
+				if(b.buildingUnit.getType() != UnitType.Terran_Command_Center)
+				{
+					b.base.buildingMemory.add(b.buildingUnit);
+				}
 				//System.out.println("buildingMemory size: " + b.base.buildingMemory.size());
 				toRemove.add(b);
 			}

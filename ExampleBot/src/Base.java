@@ -59,7 +59,7 @@ public class Base {
 	
 	void setBaseInfo()
 	{
-		List<Unit> units = this.commandCenter.getUnitsInRadius(500);
+		List<Unit> units = this.commandCenter.getUnitsInRadius(200);
         System.out.println(units.size());
         for(Unit resource : units)
         {
@@ -209,7 +209,7 @@ public class Base {
 		return commandCenter.getTilePosition();
 	}
 	
-	void runWorkers()
+	void runWorkers(Game game)
 	{
 		
 		for(MoleUnit worker : baseUnits)
@@ -225,7 +225,7 @@ public class Base {
 				{
 					if(worker.myUnit.isIdle() || worker.myUnit.isGatheringGas())
 					{
-						mineClosestMineral(worker.myUnit);
+						mineClosestMineral(worker, game);
 					}
 				}
 				else if(worker.job == Information.Job.GAS)
@@ -371,27 +371,60 @@ public class Base {
 		}
 	}
 	
+	Position getCenterOfSoldiers()
+	{
+		ArrayList<MoleUnit> soldiers = new ArrayList<MoleUnit>();
+		for(MoleUnit soldier : baseUnits)
+		{
+			if(soldier.type == Information.UnitType.MARINE || soldier.type == Information.UnitType.MEDIC)
+			{
+				if(soldier.myUnit == null)
+				{
+					continue;
+				}
+				else if(!soldier.myUnit.isCompleted())
+				{
+					continue;
+				}
+				soldiers.add(soldier);
+			}
+		}
+		
+		return MoleUnit.getCenterOfUnits(soldiers);
+	}
+	
 	void assaultPosition(Game game)
 	{
-		ArrayList<MoleUnit> marines = new ArrayList<MoleUnit>();
+		Position center = getCenterOfSoldiers();
 		for(MoleUnit marine : baseUnits)
 		{
 			if(marine.type == Information.UnitType.MARINE)
 			{
-				marines.add(marine);
-				List<Unit> enemies = marine.getEnemiesInRadius(300);
+
+				List<Unit> enemies =  marine.getEnemiesInRadius(500);
+				
+				
 				if(enemies.isEmpty())
 				{
-					marine.myTarget = new PositionOrUnit(offensivePosition);
-					marine.job = Information.Job.ATTACK;
-					marine.smartAttackMove(offensivePosition, game);
+					if(center != null && marine.myUnit.getDistance(center) > 200)
+					{
+						marine.myTarget = new PositionOrUnit(center);
+						marine.job = Information.Job.REGROUP;
+						marine.smartAttackMove(center, game);
+					}
+					else
+					{
+						marine.myTarget = new PositionOrUnit(offensivePosition);
+						marine.job = Information.Job.ATTACK;
+						marine.smartAttackMove(offensivePosition, game);
+					}
 				}
 				else
 				{
-					Unit enemy = marine.getClosestEnemyInRadius(300);
+					Unit enemy = marine.getClosestEnemyInRadius(500);
 					marine.myTarget = new PositionOrUnit(enemy);
 					marine.job = Information.Job.ATTACK;
-					if(!marine.myUnit.isStimmed() && marine.myUnit.canUseTech(TechType.Stim_Packs))
+					if(!marine.myUnit.isStimmed() && marine.myUnit.canUseTech(TechType.Stim_Packs) && marine.myUnit.isAttacking())
 					{
 						marine.myUnit.useTech(TechType.Stim_Packs);
 					}
@@ -399,18 +432,25 @@ public class Base {
 				}
 			}
 		}
-		
-		/*Position marineCenter = MoleUnit.getCenterOfUnits(marines);
-		for(MoleUnit medic :baseUnits)
+
+		for(MoleUnit medic : baseUnits)
 		{
 			if(medic.type == Information.UnitType.MEDIC)
 			{
-				if(medic.myUnit.isIdle() || medic.myUnit.getDistance(marineCenter) > 250)
+				if(medic.myUnit.getDistance(center) > 200)
 				{
-					medic.smartAttackMove(marineCenter, game);
+					medic.myTarget = new PositionOrUnit(center);
+					medic.job = Information.Job.REGROUP;
+					medic.smartAttackMove(center, game);
+				}
+				else if(medic.myUnit.isIdle())
+				{
+					medic.myTarget = new PositionOrUnit(offensivePosition);
+					medic.job = Information.Job.ATTACK;
+					medic.smartAttackMove(offensivePosition, game);
 				}
 			}
-		}*/
+		}
 	}
 	
 	void produce(Player self)
@@ -425,7 +465,7 @@ public class Base {
 			if(building.getType() == UnitType.Terran_Barracks)
 			{
 				//System.out.println("Found barracks");
-				if(true)
+				if(this.getAllUnitsByType(Information.UnitType.MARINE).size() < 25)
 				{
 					//System.out.println("Marine count low");
 					if(building.isIdle() && building.canTrain(UnitType.Terran_Marine))
@@ -470,7 +510,7 @@ public class Base {
 		{
 			if(worker.type == Information.UnitType.WORKER && worker.job == Information.Job.CONSTRUCTION)
 			{
-				if(worker.myUnit.getBuildType() == type)
+				if(worker.myUnit.getBuildType() == type || worker.myTarget.getUnit().getType() == type)
 				{
 					return true;
 				}
@@ -479,24 +519,30 @@ public class Base {
 		return false;
 	}
 	
-	void mineClosestMineral(Unit worker)
+	void mineClosestMineral(MoleUnit worker, Game game)
 	{
+		// if it has strayed from its command center, send it back there
+		if(worker.myUnit.getDistance(commandCenter) > 200)
+		{
+			worker.smartMove(commandCenter.getPosition(), game);
+		}
 		//if it's a worker and it's idle, send it to the closest mineral patch
-        if (worker.getType().isWorker() && worker.isIdle()) {
+        if (worker.myUnit.isIdle() || worker.myUnit.isGatheringGas()) {
             Unit closestMineral = null;
 
             //find the closest mineral
-            for (Unit neutralUnit : commandCenter.getUnitsInRadius(500)) {
+            for (Unit neutralUnit : game.getNeutralUnits()) {
                 if (neutralUnit.getType().isMineralField()) {
-                    if (closestMineral == null || worker.getDistance(neutralUnit) < worker.getDistance(closestMineral)) {
+                    if (closestMineral == null || worker.myUnit.getDistance(neutralUnit) < worker.myUnit.getDistance(closestMineral)) {
                         closestMineral = neutralUnit;
+                        worker.myTarget = new PositionOrUnit(closestMineral);
                     }
                 }
             }
 
             //if a mineral patch was found, send the worker to gather it
             if (closestMineral != null) {
-                worker.gather(closestMineral, false);
+                worker.smartRightClick(closestMineral, game);
             }
         }
 	}

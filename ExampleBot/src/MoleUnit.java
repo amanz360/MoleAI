@@ -71,6 +71,10 @@ public class MoleUnit{
 	
 	public static Position getCenterOfUnits(List<MoleUnit> units)
 	{
+		if(units.size() == 0)
+		{
+			return null;
+		}
 		int totalX = 0, totalY = 0;
 		for(MoleUnit unit : units)
 		{
@@ -118,19 +122,19 @@ public class MoleUnit{
 		}
 		
 		// if we have issued a command to this unit already this frame, ignore this one
-	    /*if (myUnit.getLastCommandFrame() >= game.getFrameCount() || myUnit.isAttackFrame())
+	    if (myUnit.getLastCommandFrame() >= game.getFrameCount() || myUnit.isAttackFrame())
 	    {
 	        return;
-	    }*/
+	    }
 	    
 	    // get the unit's current command
-	   /* UnitCommand currentCommand = myUnit.getLastCommand();
+	   UnitCommand currentCommand = myUnit.getLastCommand();
 
 	    // if we've already told this unit to attack this target, ignore this command
 	    if (currentCommand.getUnitCommandType() == UnitCommandType.Attack_Move && currentCommand.getTargetPosition() == target)
 	    {
 	        return;
-	    }*/
+	    }
 	    
 	    // if nothing prevents it, attack the target
 	    myUnit.attack(target);
@@ -222,11 +226,7 @@ public class MoleUnit{
 	        return;
 	    }
 	    
-	    if(myUnit.isStimmed() && myUnit.getLastCommandFrame() > game.getFrameCount() - 8)
-	    {
-	    	return;
-	    }
-	    else if(!myUnit.isStimmed() && myUnit.getLastCommandFrame() > game.getFrameCount() - 12)
+	    if(myUnit.getLastCommandFrame() >= game.getFrameCount() - 15)
 	    {
 	    	return;
 	    }

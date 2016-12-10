@@ -136,7 +136,7 @@ public class StrategyManager {
 				boolean fresh = true;
 				for(Base b : bases)
 				{
-					if(b.commandCenter.getPosition().getX() == building.getPosition().getX() && b.commandCenter.getPosition().getY() == building.getPosition().getY())
+					if(b.commandCenter.getID() == building.getID())
 					{
 						fresh = false;
 					}
@@ -160,7 +160,7 @@ public class StrategyManager {
 		{
 			b.cleanDeadBuildings();
 			b.cleanDeadUnits();
-			b.runWorkers();
+			b.runWorkers(game);
 			b.produce(self);
 			b.checkForAttack(game);
 			if(shouldAttack && b.state == Information.BaseState.SAFE)
@@ -248,12 +248,19 @@ public class StrategyManager {
 					b.productionLevel = Information.ProductionLevel.HIGH;
 				}
 				
+			}else if(bases.size() > 1 && b.productionLevel == Information.ProductionLevel.HIGH)
+			{
+				if(canBuild(self, UnitType.Terran_Barracks))
+				{
+					buildingManager.addBuildingTask(UnitType.Terran_Barracks, b);
+					b.productionLevel = Information.ProductionLevel.MASS;
+				}
 			}
 			else if(b.isSaturated() && b.getBuildingsByType(UnitType.Terran_Refinery).size() < b.gases.size())
 			{
 				if(canBuild(self, UnitType.Terran_Refinery) && !buildingManager.isQueued(UnitType.Terran_Refinery))
 				{
-					buildingManager.addBuildingTask(UnitType.Terran_Refinery, b);
+					buildingManager.addBuildingTask(UnitType.Terran_Refinery, b.gases.get(0).getTilePosition(), b);
 				}
 			}
 			if( game.self().supplyTotal() < 200 && game.self().supplyTotal() - game.self().supplyUsed() <= 4 + 2*totalBuildingCount(UnitType.Terran_Barracks) && canBuild(self, UnitType.Terran_Supply_Depot))
@@ -263,6 +270,7 @@ public class StrategyManager {
 				{
 					buildingManager.addBuildingTask(UnitType.Terran_Supply_Depot, b);
 				}
+				
 			}
 		}
 		
