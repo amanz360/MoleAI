@@ -1,8 +1,25 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <qualifiedTypeNameHistroy>
-<fullyQualifiedTypeName name="java.util.HashSet"/>
 <fullyQualifiedTypeName name="java.util.Collections"/>
 <fullyQualifiedTypeName name="MapTools"/>
 <fullyQualifiedTypeName name="bwta.BWTA"/>
 <fullyQualifiedTypeName name="Building.BuildingStatus"/>
+<fullyQualifiedTypeName name="bwapi.UpgradeType"/>
+<fullyQualifiedTypeName name="bwapi.UnitType"/>
+<fullyQualifiedTypeName name="java.util.HashSet"/>
+<fullyQualifiedTypeName name="bwapi.Game"/>
+<fullyQualifiedTypeName name="java.awt.List"/>
+<fullyQualifiedTypeName name="java.util.ArrayList"/>
+<fullyQualifiedTypeName name="java.util.List"/>
+<fullyQualifiedTypeName name="java.util.LinkedList"/>
+<fullyQualifiedTypeName name="Information.ProductionLevel"/>
+<fullyQualifiedTypeName name="Information"/>
+<fullyQualifiedTypeName name="Information.BaseState"/>
+<fullyQualifiedTypeName name="bwapi.PositionOrUnit"/>
+<fullyQualifiedTypeName name="bwapi.Position"/>
+<fullyQualifiedTypeName name="bwapi.TechType"/>
+<fullyQualifiedTypeName name="Information.Job"/>
+<fullyQualifiedTypeName name="Information.UnitType"/>
+<fullyQualifiedTypeName name="bwta.BaseLocation"/>
+<fullyQualifiedTypeName name="Information.BuildingStatus"/>
 </qualifiedTypeNameHistroy>

@@ -3,24 +3,16 @@ import java.util.ArrayList;
 import bwapi.*;
 public class Building 
 {
-	public enum BuildingStatus
-	{
-	    UNASSIGNED (0), ASSIGNED (1), UNDERCONSTRUCTION (2);
-	    
-	    private final int num;
-		BuildingStatus(int num)
-		{
-			this.num = num;
-		}
-	}
+	
 	      
 		public TilePosition     desiredPosition;
 		public TilePosition     finalPosition;
+		public Base				base;
 		public Position         position;
 		public UnitType         type;
 		public Unit             buildingUnit;
-		public Unit             builderUnit;
-		public BuildingStatus   status;
+		public MoleUnit             builderUnit;
+		public Information.BuildingStatus   status;
 		public int              lastOrderFrame;
 		public boolean          buildCommandGiven;
 		public boolean          underConstruction;
@@ -34,9 +26,10 @@ public class Building
 			this.buildingUnit = null;
 			this.builderUnit = null;
 			this.lastOrderFrame = 0;
-			this.status = BuildingStatus.UNASSIGNED;
+			this.status = Information.BuildingStatus.UNASSIGNED;
 			this.buildCommandGiven = false;
 			this.underConstruction = false;
+			this.base = null;
 	    }
 		
 		public Building(UnitType type)
@@ -48,11 +41,12 @@ public class Building
 			this.buildingUnit = null;
 			this.builderUnit = null;
 			this.lastOrderFrame = 0;
-			this.status = BuildingStatus.UNASSIGNED;
+			this.status = Information.BuildingStatus.UNASSIGNED;
 			this.buildCommandGiven = false;
 			this.underConstruction = false;
+			this.base = null;
 	    } 
-		
+
 		class BuildingData 
 		{
 		    private ArrayList<Building>     _buildings;

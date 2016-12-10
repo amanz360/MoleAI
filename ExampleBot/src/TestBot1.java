@@ -10,7 +10,7 @@ public class TestBot1 extends DefaultBWListener {
 
     private Mirror mirror = new Mirror();
 
-    private Game game;
+    private static Game game;
 
     private Player self;
     private ArrayList<Base> bases;
@@ -27,82 +27,28 @@ public class TestBot1 extends DefaultBWListener {
     public void onUnitCreate(Unit unit) {
         System.out.println("New unit discovered " + unit.getType());
         
-        if(unit.getType().equals(UnitType.Terran_Command_Center) && !unit.getTilePosition().equals(bases.get(0).commandCenter.getTilePosition()))
+        if(unit.getType().isBuilding())
         {
-        	Base newBase = new Base();
-        	newBase.setCC(unit);
-        	newBase.setBaseInfo();
-        	bases.add(newBase);
+        	strategy.addBuilding(unit);
+        }
+        else if(unit.getType() == UnitType.Terran_SCV)
+        {
+        	if(!strategy.moleContains(unit))
+        	{
+        		//System.out.println("Adding worker");
+        		//System.out.println("Num Bases: " + strategy.bases.size());
+        		strategy.addUnit(new MoleUnit(unit, Information.UnitType.WORKER));
+        	}
+        }
+        else if(unit.getType() == UnitType.Terran_Marine)
+        {
+        	strategy.addUnit(new MoleUnit(unit, Information.UnitType.MARINE));
+        }
+        else if(unit.getType() == UnitType.Terran_Medic)
+        {
+        	strategy.addUnit(new MoleUnit(unit, Information.UnitType.MEDIC));
         }
         
-        for(Base b: bases)
-        {
-        	if(b.commandCenter.getDistance(unit) < 3 && unit.getType() == UnitType.Terran_SCV)
-        	{
-        		if(!b.isSaturated())
-        		{
-        			b.mineralWorkers.add(unit);
-        		}
-        		else if(!b.gasesSaturated())
-        		{
-        			Set<Unit> refineries = b.gasWorkers.keySet();
-        			for(Unit refinery : refineries)
-        			{
-        				if(b.gasWorkers.get(refinery).size() < 3)
-        				{
-        					b.gasWorkers.get(refinery).add(unit);
-        				}
-        			}
-        		}
-        		else if(b.isSaturated() && b.gasesSaturated())
-        		{
-        			b.mineralWorkers.add(unit);
-        		}
-        	}
-        	
-        	for(Unit builderWorker : b.builderWorkers)
-        	{
-        		if(builderWorker.getDistance(unit) < 3 && unit.getType() == UnitType.Terran_Barracks && (b.productionLevel == 1 || b.productionLevel == 2))
-        		{
-        			b.marineProduction.add(unit);
-        			break;
-        		}
-           		else if(builderWorker.getDistance(unit) < 3 && unit.getType() == UnitType.Terran_Academy)
-           		{
-           			b.academy = true;
-           			b.academyBuilding = unit;
-           			break;
-           		}
-           		else if(builderWorker.getDistance(unit) < 3 && unit.getType() == UnitType.Terran_Barracks && (b.productionLevel == 4 || b.productionLevel == 5))
-        		{
-           			b.medicProduction.add(unit);
-           			break;
-        		}
-        	}
-        	
-        	for(Unit structure : b.marineProduction)
-        	{
-        		if(structure.getDistance(unit) < 3 && unit.getType() == UnitType.Terran_Marine)
-        		{
-        			b.marineForce.add(unit);
-        			System.out.println("Marine force size: " + b.marineForce.size());
-        		}
-        	}
-        	
-        	for(Unit structure : b.medicProduction)
-        	{
-        		if(structure.getDistance(unit) < 3 && unit.getType() == UnitType.Terran_Medic)
-        		{
-        			b.medicForce.add(unit);
-        			System.out.println("Medic force size: " + b.medicForce.size());
-        		}
-        		else if(structure.getDistance(unit) < 3 && unit.getType() == UnitType.Terran_Marine)
-        		{
-        			b.marineForce.add(unit);
-        			System.out.println("Marine force size: " + b.marineForce.size());
-        		}
-        	}
-        }
     }
 
     @Override
@@ -110,8 +56,6 @@ public class TestBot1 extends DefaultBWListener {
         game = mirror.getGame();
         self = game.self();
         game.setLocalSpeed(10); 
-        bases = new ArrayList<Base>();
-        scouter = new ScoutManager();
         strategy = new StrategyManager();
             
 
@@ -124,161 +68,47 @@ public class TestBot1 extends DefaultBWListener {
         
         int i = 0;
         for(BaseLocation baseLocation : BWTA.getBaseLocations()){
-        	System.out.println("Base location #" + (++i) + ". Printing location's region polygon:");
+        	//System.out.println("Base location #" + (++i) + ". Printing location's region polygon:");
         	for(Position position : baseLocation.getRegion().getPolygon().getPoints()){
-        		System.out.print(position + ", ");
+        		//System.out.print(position + ", ");
         	}
-        	System.out.println();
+        	//System.out.println();
         }
         
         
         Base main = new Base();
-        ArrayList<Unit> workers = new ArrayList<Unit>();
         
         for(Unit myUnit : self.getUnits())
         {
-        	System.out.println("Iterating through units, current unit is " + myUnit.getType().toString());
+        	//System.out.println("Iterating through units, current unit is " + myUnit.getType().toString());
         	if(myUnit.getType() == UnitType.Terran_Command_Center)
         	{
         		main.setCC(myUnit);
+        		main.addBuilding(myUnit);
+        		main.setBaseInfo();
         	}
         	
-        	if(myUnit.getType() == UnitType.Terran_SCV)
+        	/*if(myUnit.getType() == UnitType.Terran_SCV)
         	{
-        		workers.add(myUnit);
-        	}
+        		main.addUnit(new MoleUnit(myUnit, Information.UnitType.WORKER, Information.Job.MINERALS));
+        	}*/
         }
+  
         
-        List<Unit> units = main.commandCenter.getUnitsInRadius(500);
-        System.out.println(units.size());
-        ArrayList<Unit> minerals = new ArrayList<Unit>();
-        ArrayList<Unit> gases = new ArrayList<Unit>();
-        for(Unit resource : units)
-        {
-        	if(resource.getType() == UnitType.Resource_Mineral_Field)
-        	{
-        		minerals.add(resource);
-        	}
-        	if(resource.getType() == UnitType.Resource_Vespene_Geyser)
-        	{
-        		gases.add(resource);
-        		ArrayList<Unit> collectors = new ArrayList<Unit>();
-        		main.gasWorkers.put(resource, collectors);
-        	}
-        	
-        }
-        
-     
-        
-        main.minerals = minerals;
-        main.gases = gases;
-        System.out.println("Number of mineral patches: " + main.minerals.size());
-        System.out.println("Number of gases: " + main.gases.size());
-        main.mineralWorkers = workers;
-        main.addBuilder(main.mineralWorkers.get(0));
-        main.setWorkerCount(4);
-        bases.add(main);
-        System.out.println("I have " + bases.size() + " bases");
+        strategy.addBase(main);
     }
 
     @Override
     public void onFrame() {
         //game.setTextSize(10);
+    	//System.out.println("Numbases: " + strategy.bases.size());
     	
         game.drawTextScreen(10, 10, "Playing as " + self.getName() + " - " + self.getRace());
-      //iterate over my units
-        for (Unit myUnit : self.getUnits()) {
 
-          if(myUnit.getType().isBuilding() || !myUnit.isCompleted())	continue;
-       
-          game.drawTextMap(myUnit.getPosition().getX(), myUnit.getPosition().getY(), myUnit.getOrder().toString());
-          if(myUnit.getType() == UnitType.Terran_SCV)	continue;
-          game.drawLineMap(myUnit.getPosition().getX(), myUnit.getPosition().getY(), myUnit.getOrderTargetPosition().getX(), 
-          		 myUnit.getOrderTargetPosition().getY(), bwapi.Color.Green);
-        }
         lastErr = game.getLastError();
         
-        scouter.update(game);
-        
-        if(strategy.shouldExpandNow(game.self(), game))
-        {
-        	TilePosition expansionSpot = MapTools.getNextExpansion(game.self(), game);
-        	if(strategy.expansionBuilder == null)
-        	{
-        		strategy.expansionBuilder = bases.get(0).chooseScout();
-        		strategy.expansionBuilder.build(UnitType.Terran_Command_Center, expansionSpot);
-        		System.out.println("Expansion command given");
-        	}
-        	else if(!strategy.expansionBuilder.exists())
-        	{
-        		strategy.expansionBuilder = null;
-        	}
-        	else
-        	{
-        		if(game.isExplored(expansionSpot))
-        		{
-        			System.out.println("Can build expansion: " + strategy.expansionBuilder.canBuild(UnitType.Terran_Command_Center, expansionSpot));
-            		strategy.expansionBuilder.build(UnitType.Terran_Command_Center, expansionSpot);
-            		System.out.println("Expansion command given");
-        		}
-        		else
-        		{
-        			strategy.expansionBuilder.move(expansionSpot.toPosition());
-        		}
-        		
-        	}
-        }
-        else
-        {
-        	if(strategy.expansionBuilder != null)
-        	{
-        		bases.get(bases.size()-1).mineralWorkers.add(strategy.expansionBuilder);
-        		strategy.expansionBuilder = null;
-        	}
-        }
-
-        StringBuilder units = new StringBuilder("My units:\n");
-        for(Base b : bases)
-        {
-        	b.cleanBase(game);
-        	b.checkProductionLevel();
-        	b.produce(game, self, lastErr);
-        	if(scouter.noBuildingsKnown())
-        	{
-        		//System.out.println("No enemy base known");
-        		b.manageForces(game, b.commandCenter.getTilePosition());
-        	}
-        	else
-        	{
-        		
-        		Position enemySpot = scouter.getClosestEnemyBuilding(b.commandCenter.getPosition());
-        		if(enemySpot != null)
-        		{
-        			b.manageForces(game, enemySpot.toTilePosition());
-        		}
-            	//b.manageForces(game, scouter.getClosestEnemyBuilding(b.commandCenter.getPosition()).toTilePosition());
-        	}
-        	if(scouter.scoutWorker == null && b.productionLevel >= 1 && scouter.enemyBuildingMemory.isEmpty())
-        	{
-        		System.out.println("Going to assign scout!");
-        		scouter.scoutWorker = b.chooseScout();
-        		System.out.println("Assigned scout!");
-        	}
-        	if(!b.underAttack && b.marineForce.size() >= 30 && !scouter.enemyBuildingMemory.isEmpty())
-        	{
-        		//System.out.println("Attacking!");
-        		//System.out.println(scouter.getClosestEnemyBuilding(b.commandCenter.getPosition()).toTilePosition().toString());
-        		b.attacking = true;
-        	}
-        	else if(b.marineForce.size() <= 15)
-        	{
-        		b.attacking = false;
-        	}
-        }
-
-        //draw my units on screen
-        game.drawTextScreen(10, 25, units.toString());
-        
+        strategy.update(game, self);
+        strategy.drawUnitInfo(self, game);
     }
 
     public static void main(String[] args) {

@@ -9,10 +9,11 @@ import bwta.BaseLocation;
 public class ScoutManager 
 {
 	
-	public Unit scoutWorker;
+	public MoleUnit scoutWorker;
 	private TilePosition scoutDest;
     public ArrayList<TilePosition> enemyBases;
     public HashSet<Position> enemyBuildingMemory = new HashSet();
+    public Unit lastSeenEnemy;
     private int lastCheckedEnemy;
     private int lastCheckedSpawn;
     
@@ -20,6 +21,7 @@ public class ScoutManager
     {
     	lastCheckedEnemy = 0;
     	lastCheckedSpawn = 0;
+    	lastSeenEnemy = null;
     	scoutDest = null;
     	scoutWorker = null;
     	enemyBases = new ArrayList<TilePosition>();
@@ -30,11 +32,21 @@ public class ScoutManager
     {
     	return enemyBuildingMemory.isEmpty();
     }
+    
+    public void changeScout(MoleUnit scout)
+    {
+    	scoutWorker = scout;
+    	scoutWorker.job = Information.Job.SCOUT;
+    }
 	
 	public void update(Game game)
 	{
 		//always loop over all currently visible enemy units (even though this set is usually empty)
 		for (Unit u : game.enemy().getUnits()) {
+			if(game.enemy().getUnits().size() == 1)
+			{
+				lastSeenEnemy = u;
+			}
 			//if this unit is in fact a building
 			if (u.getType().isBuilding()) {
 				//check if we have it's position in memory and add it if we don't
@@ -57,8 +69,10 @@ public class ScoutManager
 				//loop over all the visible enemy buildings and find out if at least 
 				//one of them is still at that remembered position 
 				boolean buildingStillThere = false;
-				for (Unit u : game.enemy().getUnits()) {
-					if ((u.getType().isBuilding()) && (u.getPosition() == p)) {
+				for (Unit u : game.enemy().getUnits()) 
+				{
+					if (u.getType().isBuilding() && u.exists() && u.getPosition().getX() == p.getX() && u.getPosition().getY() == p.getY()) 
+					{
 						buildingStillThere = true;
 						break;
 					}
@@ -78,7 +92,7 @@ public class ScoutManager
 			return;
 		}
 		
-		if(!scoutWorker.exists())
+		if(!scoutWorker.myUnit.exists())
 		{
 			scoutWorker = null;
 			return;
@@ -91,9 +105,9 @@ public class ScoutManager
 				enemyBases.add(scoutDest);
 				scoutDest = null;
 			}*/
-			if(scoutWorker.getDistance(scoutDest.toPosition()) > 15)
+			if(scoutWorker.myUnit.getDistance(scoutDest.toPosition()) > 10)
 			{
-				scoutWorker.move(scoutDest.toPosition());
+				scoutWorker.smartMove(scoutDest.toPosition(), game);
 				return;
 			}
 			else
@@ -118,7 +132,7 @@ public class ScoutManager
 				if (!game.isExplored(startLocations.get(i))) 
 				{
 					// assign a worker to go scout it
-					scoutWorker.move(startLocations.get(i).toPosition());
+					scoutWorker.smartMove(startLocations.get(i).toPosition(), game);
 					scoutDest = startLocations.get(i);
 					lastCheckedSpawn = i;
 					return;
@@ -130,7 +144,7 @@ public class ScoutManager
 			{
 				if(!game.isExplored(location.getTilePosition()))
 				{
-					scoutWorker.move(location.getTilePosition().toPosition());
+					scoutWorker.smartMove(location.getTilePosition().toPosition(), game);
 					scoutDest = location.getTilePosition();
 					return;
 				}
@@ -140,7 +154,7 @@ public class ScoutManager
 			{
 				if(!game.isExplored(region.getPoint().toTilePosition()))
 				{
-					scoutWorker.move(region.getPoint());
+					scoutWorker.smartMove(region.getPoint(), game);
 					scoutDest = region.getPoint().toTilePosition();
 					return;
 				}
@@ -177,7 +191,7 @@ public class ScoutManager
 	{
 		for (Unit unit : game.enemy().getUnits())
 		{
-			if ((unit.getType().isWorker() || unit.getType().isResourceDepot() || unit.getType() == UnitType.Protoss_Probe) && (unit.getDistance(scoutWorker) <= 600))
+			if ((unit.getType().isWorker() || unit.getType().isResourceDepot() || unit.getType() == UnitType.Protoss_Probe) && (unit.getDistance(scoutWorker.myUnit) <= 600))
 			{
 				return true;
 			}

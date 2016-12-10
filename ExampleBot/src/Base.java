@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.List;
@@ -17,71 +18,33 @@ public class Base {
 	
 	public ArrayList<Unit> minerals;
 	public ArrayList<Unit> gases;
-	public ArrayList<Unit> mineralWorkers;
-	public Map<Unit, ArrayList<Unit>> gasWorkers;
-	public ArrayList<Unit> supplyDepots;
-	public ArrayList<Unit> marineProduction;
-	public ArrayList<Unit> medicProduction;
-	public ArrayList<Unit> marineForce;
-	public ArrayList<Unit> medicForce;
-	public ArrayList<Unit> enemiesInBase;
-	public ArrayList<Unit> builderWorkers;
+	public Map<Unit, Integer> gasWorkerCount;	
+	public HashSet<MoleUnit> baseUnits;
+	public HashSet<Unit> buildingMemory;
 	public Unit commandCenter;
-	public TilePosition attackLocation;
-	public int lastChecked;
-	public boolean academy;
-	public boolean underAttack;
-	public boolean attacking;
-	public int productionLevel;
-	private BuildingManager buildingManager;
-	private int workerCount;
-	private boolean addedBuilder;
-	private Unit lastSeenEnemy;
-	public Unit academyBuilding;
-	
-	
+	public Position offensivePosition;
+	public Information.BaseState state;
+	public List<Unit> enemiesInBase;
+	public Information.ProductionLevel productionLevel;
 	
 	Base()
 	{
 		minerals = new ArrayList<Unit>();
 		gases = new ArrayList<Unit>();
-		mineralWorkers = new ArrayList<Unit>();
-		gasWorkers = new HashMap<Unit, ArrayList<Unit>>();
-		supplyDepots = new ArrayList<Unit>();
-		marineProduction = new ArrayList<Unit>();
-		medicProduction = new ArrayList<Unit>();
-		marineForce = new ArrayList<Unit>();
-		medicForce = new ArrayList<Unit>();
 		enemiesInBase = new ArrayList<Unit>();
-		builderWorkers = new ArrayList<Unit>();
-		buildingManager = new BuildingManager();
-		workerCount = 0;
-		lastChecked = 0;
-		productionLevel = 0;
-		academy = false;
-		underAttack = false;
-		attacking = false;
-		addedBuilder = false;
-		lastSeenEnemy = null;
-		attackLocation = null;
-		academyBuilding = null;
-	}
-	
-	int getMaxMiners()
-	{
-		return (int) (minerals.size() * 2.5);
-	}
-	
-	void setWorkerCount(int count)
-	{
-		workerCount = count;
+		buildingMemory = new HashSet<Unit>();
+		baseUnits = new HashSet<MoleUnit>();
+		gasWorkerCount = new HashMap<Unit, Integer>();
+		state = Information.BaseState.SAFE;
+		productionLevel = Information.ProductionLevel.NONE;
+		offensivePosition = null;
 	}
 	
 	boolean gasesSaturated()
 	{
-		for(ArrayList<Unit> collectors : gasWorkers.values())
+		for(Unit refinery : gases)
 		{
-			if(collectors.size() < 3)
+			if(numGasWorkersOnRefinery(refinery) < 3)
 			{
 				return false;
 			}
@@ -91,15 +54,13 @@ public class Base {
 	
 	void setCC(Unit cc)
 	{
-		commandCenter = cc;
+		this.commandCenter = cc;
 	}
 	
 	void setBaseInfo()
 	{
-		List<Unit> units = commandCenter.getUnitsInRadius(500);
+		List<Unit> units = this.commandCenter.getUnitsInRadius(500);
         System.out.println(units.size());
-        ArrayList<Unit> minerals = new ArrayList<Unit>();
-        ArrayList<Unit> gases = new ArrayList<Unit>();
         for(Unit resource : units)
         {
         	if(resource.getType() == UnitType.Resource_Mineral_Field)
@@ -109,42 +70,138 @@ public class Base {
         	if(resource.getType() == UnitType.Resource_Vespene_Geyser)
         	{
         		this.gases.add(resource);
-        		ArrayList<Unit> collectors = new ArrayList<Unit>();
-        		this.gasWorkers.put(resource, collectors);
+        		this.gasWorkerCount.put(resource, 0);
         	}
         }
         
         System.out.println("New base num minerals: " + minerals.size());
 	}
 	
-	void addBuilder(Unit worker)
+	int numGasWorkersOnRefinery(Unit refinery)
 	{
-		if(!builderWorkers.contains(worker))
+		int numWorkers = 0;
+		for(MoleUnit worker : baseUnits)
 		{
-			System.out.println("Added builder: " + worker.toString());
-			builderWorkers.add(worker);
-		}
-	}
-	
-	Unit chooseScout()
-	{
-		Unit scout = null;
-		for(Unit worker : mineralWorkers)
-		{
-			if(!builderWorkers.contains(worker))
+			if(worker.type == Information.UnitType.WORKER && worker.job == Information.Job.GAS && worker.myTarget.getUnit() == refinery)
 			{
-				scout = worker;
-				workerCount--;
-				break;
+				if(worker.myTarget.getUnit() == refinery)
+				{
+					numWorkers++;
+				}
 			}
 		}
-		mineralWorkers.remove(scout);
-		return scout;
+		
+		return numWorkers;
 	}
 	
+	List<MoleUnit> getAllUnitsByType(Information.UnitType type)
+	{
+		ArrayList<MoleUnit> desired = new ArrayList<MoleUnit>();
+		for(MoleUnit unit : baseUnits)
+		{
+			if(unit.type == type)
+			{
+				desired.add(unit);
+			}
+		}
+		
+		return desired;
+	}
+	
+	ArrayList<Unit> getBuildingsByType(UnitType buildingType)
+	{
+		ArrayList<Unit> buildings = new ArrayList<Unit>();
+		for(Unit b : buildingMemory)
+		{
+			if(b.getType() == buildingType)
+			{
+				buildings.add(b);
+			}
+		}
+		
+		return buildings;
+	}
+	
+	boolean addBuilding(Unit building)
+	{
+		if(!buildingMemory.contains(building))
+		{
+			buildingMemory.add(building);
+			return true;
+		}
+		
+		return false;
+	}
+	
+	
+	boolean addUnit(MoleUnit unit)
+	{
+		if(!alreadyHaveUnit(unit))
+		{
+			baseUnits.add(unit);
+			if(unit.type == Information.UnitType.WORKER && unit.job == Information.Job.UNDEFINED)
+			{
+				unit.job = Information.Job.MINERALS;
+			}
+			return true;
+		}
+		return false;		
+	}
+	
+	boolean alreadyHaveUnit(MoleUnit unit)
+	{
+		for(MoleUnit myUnit : baseUnits)
+		{
+			if(myUnit.myUnit == unit.myUnit)
+			{
+				return true;
+			}
+		}
+		
+		return false;
+	}
+	
+	boolean mineralsDepleted()
+	{
+		for(Unit mineral : minerals)
+		{
+			if(mineral.getResources() > 0)
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+	
+	MoleUnit popWorker()
+	{
+		for(MoleUnit worker : baseUnits)
+		{
+			if(worker.type == Information.UnitType.WORKER && worker.job == Information.Job.MINERALS)
+			{
+				baseUnits.remove(worker);
+				return worker;
+			}
+		}
+		
+		return null;
+	}
+
 	boolean isSaturated()
 	{
-		return workerCount >= minerals.size()*2.5;
+		List<MoleUnit> workers = this.getAllUnitsByType(Information.UnitType.WORKER);
+		int minerCount = 0;
+		
+		for(MoleUnit worker : workers)
+		{
+			if(worker.job == Information.Job.MINERALS)
+			{
+				minerCount++;
+			}
+				
+		}
+		
+		return minerCount >= minerals.size()*2.5;
 	}
 	
 	TilePosition getLocation()
@@ -152,491 +209,284 @@ public class Base {
 		return commandCenter.getTilePosition();
 	}
 	
-	void cleanBase(Game game)
+	void runWorkers()
 	{
-		for(Unit worker : mineralWorkers)
-		{
-			if(!worker.exists())
-			{
-				mineralWorkers.remove(worker);
-				workerCount--;
-			}
-			if(worker.isIdle() || worker.isCarryingGas() || worker.isGatheringGas())
-			{
-				mineClosestMineral(worker, game);
-			}
-		}
 		
-		for(Unit refinery : gases)
+		for(MoleUnit worker : baseUnits)
 		{
-			if(refinery.getType() == UnitType.Terran_Refinery)
+			if(worker.type == Information.UnitType.WORKER)
 			{
-				if(gasWorkers.get(refinery).size() > 3)
+				if(worker.job == Information.Job.UNDEFINED)
 				{
-					while(gasWorkers.get(refinery).size() > 3)
+					worker.job = Information.Job.MINERALS;
+				}
+				
+				if(worker.job == Information.Job.MINERALS)
+				{
+					if(worker.myUnit.isIdle() || worker.myUnit.isGatheringGas())
 					{
-						if(!mineralWorkers.contains(gasWorkers.get(refinery).get(0)))
+						mineClosestMineral(worker.myUnit);
+					}
+				}
+				else if(worker.job == Information.Job.GAS)
+				{
+					if(worker.myUnit.isIdle() || worker.myUnit.isGatheringMinerals())
+					{
+						if(worker.myTarget.getUnit().getType() != UnitType.Terran_Refinery)
 						{
-							mineralWorkers.add(gasWorkers.get(refinery).get(0));
+							worker.job = Information.Job.MINERALS;
 						}
-						gasWorkers.get(refinery).remove(0);
+						else
+						{
+							worker.myUnit.gather(worker.myTarget.getUnit());
+						}
 					}
 				}
-				for(Unit worker : gasWorkers.get(refinery))
+				else if(worker.job == Information.Job.CONSTRUCTION)
 				{
-					if(!worker.exists())
-					{
-						gasWorkers.get(refinery).remove(worker);
-					}
-					if(worker.isIdle())
-					{
-						worker.gather(refinery, false);
-					}
+					//System.out.println("Construction worker found");
 				}
 			}
-			
 		}
-		
-		for(Unit supplyDepot : supplyDepots)
-		{
-			if(!supplyDepot.exists())
-			{
-				supplyDepots.remove(supplyDepot);
-			}
-		}
-		
-		if(builderWorkers.size() == 0)
-		{
-			builderWorkers.add(mineralWorkers.get(0));
-		}
-		
-		for(Unit builder : builderWorkers)
-		{
-			if(!builder.exists())
-			{
-				builderWorkers.remove(builder);
-			}
-			if(builder.isIdle())
-			{
-				mineClosestMineral(builder, game);
-			}
-		}
-		
-		buildingManager.builders = builderWorkers;
 	}
 	
-	void trainSCV(Player self)
+	void cleanDeadBuildings()
 	{
-		commandCenter.train(UnitType.Terran_SCV);
-		workerCount++;
-		System.out.println("SCV trained! Worker Count: " + workerCount);
-	}
-	
-	void checkProductionLevel()
-	{
-		if(workerCount >= 8 && marineProduction.size() < 1 && productionLevel != 1)
+		for(Unit building : buildingMemory)
 		{
-			System.out.println("Reached production level 1!");
-			if(productionLevel != 1 && !buildingManager.isBeingBuilt(UnitType.Terran_Barracks))
+			if(!building.exists())
 			{
-				productionLevel = 1;
-				addBuilder(mineralWorkers.get(builderWorkers.size()));
-				buildingManager.addBuildingTask(UnitType.Terran_Barracks);
-				
-			}
-		}
-		else if(workerCount >= 12 && marineProduction.size() < 2 && productionLevel != 2)
-		{
-			System.out.println("Reached production level 2!");
-			if(productionLevel != 2 && !buildingManager.isBeingBuilt(UnitType.Terran_Barracks))
-			{
-				productionLevel = 2;
-				addBuilder(mineralWorkers.get(builderWorkers.size()));
-				buildingManager.addBuildingTask(UnitType.Terran_Barracks);
-			}
-		}
-		else if(this.gasesSaturated() && !academy && marineProduction.size() >= 2 && productionLevel != 3)
-		{
-			System.out.println("Reached production level 3!");
-			if(productionLevel != 3 && !buildingManager.isBeingBuilt(UnitType.Terran_Academy))
-			{
-				productionLevel = 3;
-				addBuilder(mineralWorkers.get(builderWorkers.size()));
-				buildingManager.addBuildingTask(UnitType.Terran_Academy);
-				academy = true;
-			}
-		}
-		else if(academy && medicProduction.size() == 0 && productionLevel != 4)
-		{
-			System.out.println("Reached production level 4!");
-			
-			if(productionLevel != 4 && !buildingManager.isBeingBuilt(UnitType.Terran_Barracks))
-			{
-				productionLevel = 4;
-				addBuilder(mineralWorkers.get(builderWorkers.size()));
-				buildingManager.addBuildingTask(UnitType.Terran_Barracks);
-				
-			}
-		}
-		else if(academy && medicProduction.size() == 1 && productionLevel != 5)
-		{
-			System.out.println("Reached production level 5!");
-			
-			if(productionLevel != 5 && !buildingManager.isBeingBuilt(UnitType.Terran_Barracks))
-			{
-				productionLevel = 5;
-				addBuilder(mineralWorkers.get(builderWorkers.size()));
-				buildingManager.addBuildingTask(UnitType.Terran_Barracks);
-				academyBuilding.issueCommand(UnitCommand.upgrade(academyBuilding, UpgradeType.U_238_Shells));
+				buildingMemory.remove(building);
+				if(building.getType() == UnitType.Terran_Barracks)
+				{
+					this.productionLevel = this.productionLevel.getLower();
+				}
 			}
 		}
 	}
 	
-	void produce(Game game, Player self, Error lastErr)
+	void cleanDeadUnits()
 	{
-		buildingManager.update(game, self);
-
-		if(!this.isSaturated() && self.minerals() >= 50 && self.supplyTotal() - self.supplyUsed() >= 2 && this.commandCenter.isIdle())
-    	{
-    		this.trainSCV(self);
-    	}
-		
-    	if(self.supplyTotal() - self.supplyUsed() <= 4 + 2*productionLevel && self.supplyTotal() != 200)
-    	{
-    		if(!buildingManager.isBeingBuilt(UnitType.Terran_Supply_Depot))
-			{
-				buildingManager.addBuildingTask(UnitType.Terran_Supply_Depot);
-			}
-    	}
-    	
-    	if(this.isSaturated())
-    	{
-    		Set<Unit> refineries = gasWorkers.keySet();
-    		for(Unit refinery : refineries)
-        	{
-    			if(refinery.getType() == UnitType.Resource_Vespene_Geyser)
-    			{
-    				if(!buildingManager.isBeingBuilt(UnitType.Terran_Refinery))
-    				{
-    					buildingManager.addBuildingTask(UnitType.Terran_Refinery);
-    				}
-    			}
-        	}
-    		for(Unit refinery : refineries)
-    		{
-    			if(refinery.isCompleted() && self.minerals() >= 50 &&  gasWorkers.get(refinery).size() < 3 && self.supplyTotal() - self.supplyUsed() >= 2 && commandCenter.isIdle())
-    			{
-    				this.trainSCV(self);
-    			}
-    		}
-    	}
-    	
-		trainMarines();
-		trainMedics();
-	}
-	
-	void trainMarines()
-	{
-		for(Unit barracks : marineProduction)
+		for(MoleUnit unit : baseUnits)
 		{
-			if(barracks.getType() == UnitType.Terran_Barracks && barracks.isIdle())
+			if(!unit.myUnit.exists())
 			{
-				barracks.train(UnitType.Terran_Marine);
+				//System.out.println("Cleaning dead unit");
+				baseUnits.remove(unit);
 			}
 		}
 	}
 	
-	void trainMedics()
+	public void checkForAttack(Game game)
 	{
-		for(Unit barracks : medicProduction)
-		{
-			if(barracks.getType() == UnitType.Terran_Barracks && barracks.isIdle() && medicForce.size() <= 0.25 *  marineForce.size())
-			{
-				barracks.train(UnitType.Terran_Medic);
-			}
-			else if(barracks.getType() == UnitType.Terran_Barracks && barracks.isIdle() && medicForce.size() > 0.25 *  marineForce.size())
-			{
-				barracks.train(UnitType.Terran_Marine);
-			}
-		}
-	}
-	
-	void manageForces(Game game, TilePosition location)
-	{
-		for(Unit marine : marineForce)
-		{
-			if(!marine.exists())
-			{
-				System.out.println("Marine down!");
-				marineForce.remove(marine);
-				System.out.println("Remaing marines: " + marineForce.size());
-			}
-		}
-		for(Unit medic : medicForce)
-		{
-			if(!medic.exists())
-			{
-				System.out.println("Medic down!");
-				medicForce.remove(medic);
-				System.out.println("Remaining medics: " + medicForce.size());
-			}
-		}
-		
-		List<Unit> units = commandCenter.getUnitsInRadius(1000);
+		List<Unit> nearby = commandCenter.getUnitsInRadius(1000);
 		List<Unit> enemies = game.enemy().getUnits();
-		//System.out.println(enemies);
-		
-		for(Unit enemy : enemies)
+		nearby.retainAll(enemies);
+		if(!nearby.isEmpty())
 		{
-			if(units.contains(enemy) && !enemiesInBase.contains(enemy))
-			{
-				System.out.println("Found new enemy!");
-				enemiesInBase.add(enemy);
-				lastSeenEnemy = enemy;
-				underAttack = true;
-			}
+			//System.out.println("Enemies found!");
+			state = Information.BaseState.DISTRESSED;
+			enemiesInBase = nearby;
 		}
-
+		else if(state == Information.BaseState.DISTRESSED)
+		{
+			state = Information.BaseState.SAFE;
+		}
+	}
+	
+	void manageMarines(Game game)
+	{
+		if(state == Information.BaseState.SAFE)
+		{
+			// TODO: regroup to smart spot based on current base locations and last seen enemy
+			TilePosition forwardPosition = MapTools.getNextExpansion(game.self(), game);
+			offensivePosition = forwardPosition.toPosition();
+			assaultPosition(game);
+		}
+		else if(state == Information.BaseState.DISTRESSED)
+		{
+			//System.out.println("Defending!");
+			//defendBase(game);
+			offensivePosition = getClosestBaseThreat(this.commandCenter).getPosition();
+			assaultPosition(game);
+		}
+		else if(state == Information.BaseState.ATTACKING)
+		{
+			assaultPosition(game);
+		}
+	}
+	
+	Unit getClosestBaseThreat(MoleUnit unit)
+	{
+		Unit closest = null;
+		
 		for(Unit enemy : enemiesInBase)
 		{
-			if(!enemy.isVisible() || !enemy.exists())
+			if(closest == null)
 			{
-				System.out.println("Enemy gone!");
-				if(enemiesInBase.size() == 1)
-				{
-					lastSeenEnemy = enemiesInBase.get(0);
-					underAttack = false;
-				}
-				enemiesInBase.remove(enemy);
-				
+				closest = enemy;
+			}
+			else if(unit.myUnit.getDistance(enemy) < unit.myUnit.getDistance(closest))
+			{
+				closest = enemy;
 			}
 		}
 		
-		if(!attacking)
+		return closest;
+	}
+	
+	Unit getClosestBaseThreat(Unit unit)
+	{
+		Unit closest = null;
+		
+		for(Unit enemy : enemiesInBase)
 		{
-			//System.out.println("defending");
-			sendForce(marineForce, game, commandCenter.getTilePosition());
+			if(closest == null)
+			{
+				closest = enemy;
+			}
+			else if(unit.getDistance(enemy) < unit.getDistance(closest))
+			{
+				closest = enemy;
+			}
 		}
-		else
+		
+		return closest;
+	}
+	
+	void defendBase(Game game)
+	{
+		for(MoleUnit marine : baseUnits)
 		{
-			//System.out.println("attacking");
-			sendForce(marineForce, game, location);
+			if(marine.type == Information.UnitType.MARINE)
+			{
+				Unit enemy = getClosestBaseThreat(marine);
+				if(enemy != null)
+				{
+					marine.myTarget = new PositionOrUnit(enemy);
+					marine.smartKiteTarget(enemy, game);
+					marine.job = Information.Job.DEFEND;
+				}
+			}
 		}
 	}
 	
-	void sendForce(ArrayList<Unit> force, Game game, TilePosition location)
+	void assaultPosition(Game game)
 	{
-		for(Unit marine : force)
+		ArrayList<MoleUnit> marines = new ArrayList<MoleUnit>();
+		for(MoleUnit marine : baseUnits)
 		{
-			if(!marine.isCompleted() && marine.getLastCommandFrame() >= game.getFrameCount() || marine.isAttackFrame())
+			if(marine.type == Information.UnitType.MARINE)
 			{
-				//System.out.println("Skipping attack frame...");
-				return;
-			}
-			
-			UnitCommand lastCommand = marine.getLastCommand();
-			//System.out.println("last command: " + lastCommand.getUnitCommandType().toString());
-			//System.out.println("first enemy position: " + enemiesInBase.get(0).getPosition().toString());
-			//System.out.println("last target position" + lastCommand.getTarget().getPosition());
-			if(lastCommand.getUnitCommandType() != UnitCommandType.Attack_Move || marine.isIdle())
-			{
-				Unit enemy = getClosestEnemy(marine, game);
-				if(commandCenter.canUseTech(TechType.Scanner_Sweep) && (enemy.isCloaked() || enemy.isBurrowed()))
+				marines.add(marine);
+				List<Unit> enemies = marine.getEnemiesInRadius(300);
+				if(enemies.isEmpty())
 				{
-					commandCenter.useTech(TechType.Scanner_Sweep, new PositionOrUnit(enemy.getPosition()));
-				}
-				if(lastCommand.getTarget().equals(enemy))	return;
-				if(enemy == null)
-				{
-					marine.attack(location.toPosition());
+					marine.myTarget = new PositionOrUnit(offensivePosition);
+					marine.job = Information.Job.ATTACK;
+					marine.smartAttackMove(offensivePosition, game);
 				}
 				else
 				{
-					PositionOrUnit spot = new PositionOrUnit(enemy.getTilePosition().toPosition());
-					marine.issueCommand(UnitCommand.attack(marine, spot));
+					Unit enemy = marine.getClosestEnemyInRadius(300);
+					marine.myTarget = new PositionOrUnit(enemy);
+					marine.job = Information.Job.ATTACK;
+					if(!marine.myUnit.isStimmed() && marine.myUnit.canUseTech(TechType.Stim_Packs))
+					{
+						marine.myUnit.useTech(TechType.Stim_Packs);
+					}
+					marine.smartKiteTarget(enemy, game);
 				}
 			}
-			
-			//System.out.println(marine.toString() + " Marine HP: " + marine.getHitPoints() + " / " + marine.getType().maxHitPoints());
-			
-			/*if(marine.getHitPoints() < marine.getType().maxHitPoints())
-			{
-				healMarine(marine);
-			}*/
 		}
 		
-		for(Unit medic : medicForce)
+		/*Position marineCenter = MoleUnit.getCenterOfUnits(marines);
+		for(MoleUnit medic :baseUnits)
 		{
-			List<Unit> units = medic.getUnitsInRadius(300);
-			if(BWTA.getNearestChokepoint(medic.getPosition()).getDistance(medic.getPoint()) < 15)
+			if(medic.type == Information.UnitType.MEDIC)
 			{
-				medic.attack(marineForce.get(marineForce.size()-1).getPosition());
+				if(medic.myUnit.isIdle() || medic.myUnit.getDistance(marineCenter) > 250)
+				{
+					medic.smartAttackMove(marineCenter, game);
+				}
 			}
-			else if(Collections.disjoint(units, marineForce))
-			{
-				Unit closest = getClosestMarine(medic, marineForce);
-				medic.attack(closest.getPosition());
-			}
-		}
-	}
-	
-	Unit getClosestMarine(Unit medic, List<Unit> force)
-	{
-		Unit closest = null;
-		for(Unit marine : force)
-		{
-			if(closest == null)
-			{
-				closest = marine;
-			}
-			else if(marine.isCompleted() && medic.getDistance(marine) < medic.getDistance(closest))
-			{
-				closest = marine;
-			}
-		}
-		
-		return closest;
-	}
-	
-	void endAttack()
-	{
-		this.attacking = false;
-		/*for(Unit marine : marineForce)
-		{
-			marine.move(commandCenter.getPosition());
-		}
-		
-		for(Unit medic : medicForce)
-		{
-			medic.move(commandCenter.getPosition());
 		}*/
 	}
 	
-	void attackLocation(TilePosition location, Game game)
+	void produce(Player self)
 	{
-		if(underAttack)	return;
-		attacking = true;
-		
-		for(Unit marine : marineForce)
+		if((!this.isSaturated() || !this.gasesSaturated()) && self.minerals() >= 50 && self.supplyTotal() - self.supplyUsed() >= 2 && this.commandCenter.isIdle())
 		{
-			if(!marine.isCompleted() && marine.getLastCommandFrame() >= game.getFrameCount() || marine.isAttackFrame())
-			{
-				//System.out.println("Skipping attack frame...");
-				return;
-			}
-			
-			UnitCommand lastCommand = marine.getLastCommand();
-			//System.out.println("last command: " + lastCommand.getUnitCommandType().toString());
-			//System.out.println("first enemy position: " + enemiesInBase.get(0).getPosition().toString());
-			//System.out.println("last target position" + lastCommand.getTarget().getPosition());
-			if(lastCommand.getUnitCommandType() != UnitCommandType.Attack_Move || marine.isIdle())
-			{
-				marine.attack(location.toPosition());
-			}
-			
-			System.out.println(marine.toString() + " Marine HP: " + marine.getHitPoints() + " / " + marine.getType().maxHitPoints());
-			
-			if(marine.getHitPoints() < marine.getType().maxHitPoints())
-			{
-				healMarine(marine);
-			}
+			commandCenter.train(UnitType.Terran_SCV);
 		}
 		
-		for(Unit medic : medicForce)
+		for(Unit building : buildingMemory)
 		{
-			UnitCommand lastCommand = medic.getLastCommand();
-			if(medic.isIdle())
+			if(building.getType() == UnitType.Terran_Barracks)
 			{
-				medic.follow(marineForce.get(marineForce.size()/2));
+				//System.out.println("Found barracks");
+				if(true)
+				{
+					//System.out.println("Marine count low");
+					if(building.isIdle() && building.canTrain(UnitType.Terran_Marine))
+					{
+						//System.out.print("Training marine");
+						building.train(UnitType.Terran_Marine);
+					}
+				}
+				else if(this.getAllUnitsByType(Information.UnitType.MEDIC).size() < this.getAllUnitsByType(Information.UnitType.MARINE).size()*.2 && !this.isProducing(UnitType.Terran_Medic) && building.canTrain(UnitType.Terran_Medic))
+				{
+					if(building.isIdle() && building.canTrain(UnitType.Terran_Medic))
+					{
+						building.train(UnitType.Terran_Medic);
+					}
+				}
+				else
+				{
+					if(building.isIdle() && building.canTrain(UnitType.Terran_Marine))
+					{
+						building.train(UnitType.Terran_Marine);
+					}
+				}
 			}
 		}
 	}
 	
-	void healMarine(Unit marine)
+	boolean isProducing(UnitType type)
 	{
-		Unit closestMedic = getClosestMedic(marine);
-		UnitCommand lastCommand = closestMedic.getLastCommand();
-		if(!marine.isBeingHealed() && (lastCommand.getUnitCommandType() != UnitCommandType.Move || closestMedic.isIdle()))
+		for(Unit building : buildingMemory)
 		{
-			System.out.println("Healing marine");
-			closestMedic.attack(marine.getPosition());
-		}
-		//getClosestMedic(marine).rightClick(marine);
-	}
-	
-	void superHealMarine(Unit marine)
-	{
-		PositionOrUnit unit = new PositionOrUnit(marine);
-		ArrayList<Unit> availableMedics = getAvailableMedics();
-		for(Unit medic : availableMedics)
-		{
-			medic.issueCommand(UnitCommand.useTech(medic, TechType.Healing, unit));
-		}
-	}
-	
-	Unit getClosestMedic(Unit marine)
-	{
-		Unit closest = null;
-		for(Unit medic : medicForce)
-		{
-			UnitCommand lastCommand = medic.getLastCommand();
-			if(closest == null)
+			if(building.isTraining() && building.getTrainingQueue().contains(type))
 			{
-				closest = medic;
-			}
-			else if(marine.getDistance(medic) < marine.getDistance(closest) && (lastCommand.getUnitCommandType() != UnitCommandType.Move || medic.isIdle()))
-			{
-				closest = medic;
+				return true;
 			}
 		}
-		
-		return closest;
+		return false;
 	}
 	
-	ArrayList<Unit> getAvailableMedics()
+	boolean isConstructing(UnitType type)
 	{
-		
-		ArrayList<Unit> availableMedics = new ArrayList<Unit>();
-		
-		for(Unit medic : medicForce)
+		for(MoleUnit worker : baseUnits)
 		{
-			UnitCommand lastCommand = medic.getLastCommand();
-			if(lastCommand.getUnitCommandType() != UnitCommandType.Use_Tech || medic.isIdle())
+			if(worker.type == Information.UnitType.WORKER && worker.job == Information.Job.CONSTRUCTION)
 			{
-				availableMedics.add(medic);
+				if(worker.myUnit.getBuildType() == type)
+				{
+					return true;
+				}
 			}
 		}
-		
-		return availableMedics;
+		return false;
 	}
 	
-	Unit getClosestEnemy(Unit marine, Game game)
-	{
-		Unit closest = null;
-		//System.out.println("Enemies seen: " + enemies.size());
-		List<Unit> enemies = marine.getUnitsInRadius(1000);
-		for(Unit enemy : enemies)
-		{
-			if(closest == null && game.self().isEnemy(enemy.getPlayer()))
-			{
-				closest = enemy;
-			}
-			else if(game.self().isEnemy(enemy.getPlayer()) && marine.getDistance(enemy) < marine.getDistance(closest))
-			{
-				closest = enemy;
-			}
-		}
-		return closest;
-	}
-	
-	void mineClosestMineral(Unit worker, Game game)
+	void mineClosestMineral(Unit worker)
 	{
 		//if it's a worker and it's idle, send it to the closest mineral patch
         if (worker.getType().isWorker() && worker.isIdle()) {
             Unit closestMineral = null;
 
             //find the closest mineral
-            for (Unit neutralUnit : game.neutral().getUnits()) {
+            for (Unit neutralUnit : commandCenter.getUnitsInRadius(500)) {
                 if (neutralUnit.getType().isMineralField()) {
                     if (closestMineral == null || worker.getDistance(neutralUnit) < worker.getDistance(closestMineral)) {
                         closestMineral = neutralUnit;

@@ -1,0 +1,35 @@
+
+public class Information {
+	public enum UnitType
+	{
+	    MARINE (0), MEDIC (1), WORKER (2);
+	    
+	    private final int num;
+		UnitType(int num)
+		{
+			this.num = num;
+		}
+	}
+	
+	public enum WorkerJob
+	{
+	    MINERALS (0), GAS (1), CONSTRUCTION (2), SCOUT (3);
+	    
+	    private final int num;
+		WorkerJob(int num)
+		{
+			this.num = num;
+		}
+	}
+	
+	public enum BuildingStatus
+	{
+	    UNASSIGNED (0), ASSIGNED (1), UNDERCONSTRUCTION (2);
+	    
+	    private final int num;
+		BuildingStatus(int num)
+		{
+			this.num = num;
+		}
+	}
+}
