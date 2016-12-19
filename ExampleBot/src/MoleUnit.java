@@ -50,12 +50,31 @@ public class MoleUnit{
 		return enemies;
 	}
 	
+	public List<Unit> getAlliesInRadius(int radius)
+	{
+		List<Unit> nearby = myUnit.getUnitsInRadius(radius);
+		ArrayList<Unit> allies = new ArrayList<Unit>();
+		for(Unit unit : nearby)
+		{
+			if(myUnit.getPlayer().equals(unit.getPlayer()))
+			{
+				allies.add(unit);
+			}
+		}
+		
+		return allies;
+	}
+	
 	public Unit getClosestEnemyInRadius(int radius)
 	{
 		List<Unit> enemies = getEnemiesInRadius(radius);
 		Unit closest = null;
 		for(Unit enemy : enemies)
 		{
+			if((enemy.isCloaked() || enemy.isBurrowed()) && !enemy.isDetected())
+			{
+				continue;
+			}
 			if(closest == null)
 			{
 				closest = enemy;
@@ -66,6 +85,53 @@ public class MoleUnit{
 			}
 		}
 		
+		return closest;
+	}
+	
+	public Unit getClosestAllyInRadius(int radius)
+	{
+		List<Unit> allies = getAlliesInRadius(radius);
+		Unit closest = null;
+		for(Unit ally : allies)
+		{
+			if(closest == null)
+			{
+				closest = ally;
+			}else if(myUnit.getDistance(ally) < myUnit.getDistance(closest))
+			{
+				closest = ally;
+			}
+		}
+		
+		return closest;
+	}
+	
+	public Unit getClosestDamagedAllyInRadius(int radius)
+	{
+		List<Unit> allies = getAlliesInRadius(radius);
+		Unit closest = null;
+		//System.out.println("Starting search!");
+		for(Unit ally : allies)
+		{
+			if(!ally.isCompleted())
+			{
+				continue;
+			}
+			//System.out.println("Ally hp: " + ally.getHitPoints());
+			//System.out.println("Ally max hp: " + ally.getType().maxHitPoints());
+			//System.out.println(closest == null);
+			if(closest == null && ally.getHitPoints() < ally.getType().maxHitPoints())
+			{
+			//	System.out.println("Found one!");
+				closest = ally;
+			}else if(closest != null && myUnit.getDistance(ally) < myUnit.getDistance(closest) && ally.getHitPoints() < ally.getType().maxHitPoints())
+			{
+			//	System.out.println("Found a closer one!");
+				closest = ally;
+			}
+		}
+		
+		//System.out.println("Finished searching");
 		return closest;
 	}
 	
@@ -226,7 +292,7 @@ public class MoleUnit{
 	        return;
 	    }
 	    
-	    if(myUnit.getLastCommandFrame() >= game.getFrameCount() - 15)
+	    if(myUnit.getLastCommandFrame() >= game.getFrameCount() - 13)
 	    {
 	    	return;
 	    }

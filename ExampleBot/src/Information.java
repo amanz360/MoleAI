@@ -2,7 +2,7 @@
 public class Information {
 	public enum UnitType
 	{
-	    UNDEFINED(0), MARINE (1), MEDIC (2), WORKER (3);
+	    UNDEFINED(0), MARINE (1), MEDIC (2), FIREBAT(3), WORKER (4);
 	    
 	    private final int num;
 		UnitType(int num)

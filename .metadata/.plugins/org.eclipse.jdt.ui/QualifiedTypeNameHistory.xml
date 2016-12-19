@@ -12,14 +12,14 @@
 <fullyQualifiedTypeName name="java.util.ArrayList"/>
 <fullyQualifiedTypeName name="java.util.List"/>
 <fullyQualifiedTypeName name="java.util.LinkedList"/>
-<fullyQualifiedTypeName name="Information.ProductionLevel"/>
 <fullyQualifiedTypeName name="Information"/>
-<fullyQualifiedTypeName name="Information.BaseState"/>
 <fullyQualifiedTypeName name="bwapi.PositionOrUnit"/>
 <fullyQualifiedTypeName name="bwapi.Position"/>
 <fullyQualifiedTypeName name="bwapi.TechType"/>
-<fullyQualifiedTypeName name="Information.Job"/>
-<fullyQualifiedTypeName name="Information.UnitType"/>
 <fullyQualifiedTypeName name="bwta.BaseLocation"/>
 <fullyQualifiedTypeName name="Information.BuildingStatus"/>
+<fullyQualifiedTypeName name="Information.Job"/>
+<fullyQualifiedTypeName name="Information.BaseState"/>
+<fullyQualifiedTypeName name="Information.UnitType"/>
+<fullyQualifiedTypeName name="Information.ProductionLevel"/>
 </qualifiedTypeNameHistroy>

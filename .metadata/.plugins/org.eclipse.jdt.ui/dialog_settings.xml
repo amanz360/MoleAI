@@ -25,6 +25,20 @@
 	</section>
 	<section name="JavaElementSearchActions">
 	</section>
+	<section name="FatJarPackageWizard">
+		<item value="C:\Users\amanz360\Documents\GitHub\MoleAI\MoleAI.jar" key="FatJarPackageWizardPage.DESTINATION_PATH_SELECTION"/>
+		<item value="TestBot1 - ExampleBot" key="FatJarPackageWizardPage.LAUNCH_CONFIGURATION_SELECTION_NAME"/>
+		<item value="C:\Users\amanz360\Documents\GitHub\MoleAI" key="FatJarPackageWizardPage.ANTSCRIPT_LOCATION"/>
+		<item value="false" key="FatJarPackageWizardPage.ANTSCRIPT_SAVE"/>
+		<item value="1" key="FatJarPackageWizardPage.LIBRARY_HANDLING"/>
+		<list key="FatJarPackageWizardPage.DESTINATION_NAMES_ID">
+			<item value="C:\Users\amanz360\Documents\GitHub\MoleAI\MoleAI.jar"/>
+		</list>
+		<list key="FatJarPackageWizardPage.ANTSCRIPT_LOCATION_HISTORY">
+			<item value="C:\Users\amanz360\Documents\GitHub\MoleAI.xml"/>
+			<item value=".xml"/>
+		</list>
+	</section>
 	<section name="quick_assist_proposal_size">
 	</section>
 	<section name="NewClassWizardPage">

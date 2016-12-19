@@ -44,6 +44,10 @@ public class TestBot1 extends DefaultBWListener {
         {
         	strategy.addUnit(new MoleUnit(unit, Information.UnitType.MARINE));
         }
+        else if(unit.getType() == UnitType.Terran_Firebat)
+        {
+        	strategy.addUnit(new MoleUnit(unit, Information.UnitType.FIREBAT));
+        }
         else if(unit.getType() == UnitType.Terran_Medic)
         {
         	strategy.addUnit(new MoleUnit(unit, Information.UnitType.MEDIC));
@@ -55,7 +59,7 @@ public class TestBot1 extends DefaultBWListener {
     public void onStart() {
         game = mirror.getGame();
         self = game.self();
-        game.setLocalSpeed(10); 
+        game.setLocalSpeed(20); 
         strategy = new StrategyManager();
             
 
@@ -96,6 +100,7 @@ public class TestBot1 extends DefaultBWListener {
   
         
         strategy.addBase(main);
+        strategy.buildingManager.main = main;
     }
 
     @Override

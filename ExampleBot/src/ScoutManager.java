@@ -12,7 +12,7 @@ public class ScoutManager
 	public MoleUnit scoutWorker;
 	private TilePosition scoutDest;
     public ArrayList<TilePosition> enemyBases;
-    public HashSet<Position> enemyBuildingMemory = new HashSet();
+    public HashSet<Position> enemyBuildingMemory = new HashSet<Position>();
     public Unit lastSeenEnemy;
     private int lastCheckedEnemy;
     private int lastCheckedSpawn;

@@ -376,7 +376,7 @@ public class Base {
 		ArrayList<MoleUnit> soldiers = new ArrayList<MoleUnit>();
 		for(MoleUnit soldier : baseUnits)
 		{
-			if(soldier.type == Information.UnitType.MARINE || soldier.type == Information.UnitType.MEDIC)
+			if(soldier.type == Information.UnitType.MARINE || soldier.type == Information.UnitType.MEDIC || soldier.type == Information.UnitType.FIREBAT)
 			{
 				if(soldier.myUnit == null)
 				{
@@ -398,7 +398,7 @@ public class Base {
 		Position center = getCenterOfSoldiers();
 		for(MoleUnit marine : baseUnits)
 		{
-			if(marine.type == Information.UnitType.MARINE)
+			if(marine.type == Information.UnitType.MARINE || marine.type == Information.UnitType.FIREBAT)
 			{
 
 				List<Unit> enemies =  marine.getEnemiesInRadius(500);
@@ -406,7 +406,7 @@ public class Base {
 				
 				if(enemies.isEmpty())
 				{
-					if(center != null && marine.myUnit.getDistance(center) > 200)
+					if(center != null && marine.myUnit.getDistance(center) > 500 && marine.getAlliesInRadius(175).size() < 20)
 					{
 						marine.myTarget = new PositionOrUnit(center);
 						marine.job = Information.Job.REGROUP;
@@ -437,7 +437,19 @@ public class Base {
 		{
 			if(medic.type == Information.UnitType.MEDIC)
 			{
-				if(medic.myUnit.getDistance(center) > 200)
+				Unit damaged = medic.getClosestDamagedAllyInRadius(500);
+				if(damaged != null)
+				{
+					//System.out.println("Damaged ally found!");
+					medic.myTarget = new PositionOrUnit(damaged);
+					if(medic.myTarget.getUnit().getID() == damaged.getID())
+					{
+						continue;
+					}
+					medic.job = Information.Job.ATTACK;
+					medic.smartAttackMove(damaged.getPosition(), game);
+				}
+				else if(center != null && medic.myUnit.getDistance(center) > 500 && medic.getAlliesInRadius(175).size() < 20)
 				{
 					medic.myTarget = new PositionOrUnit(center);
 					medic.job = Information.Job.REGROUP;
@@ -445,6 +457,7 @@ public class Base {
 				}
 				else if(medic.myUnit.isIdle())
 				{
+					//System.out.println("No damaged allies, moving forward!");
 					medic.myTarget = new PositionOrUnit(offensivePosition);
 					medic.job = Information.Job.ATTACK;
 					medic.smartAttackMove(offensivePosition, game);
@@ -465,20 +478,18 @@ public class Base {
 			if(building.getType() == UnitType.Terran_Barracks)
 			{
 				//System.out.println("Found barracks");
-				if(this.getAllUnitsByType(Information.UnitType.MARINE).size() < 25)
-				{
-					//System.out.println("Marine count low");
-					if(building.isIdle() && building.canTrain(UnitType.Terran_Marine))
-					{
-						//System.out.print("Training marine");
-						building.train(UnitType.Terran_Marine);
-					}
-				}
-				else if(this.getAllUnitsByType(Information.UnitType.MEDIC).size() < this.getAllUnitsByType(Information.UnitType.MARINE).size()*.2 && !this.isProducing(UnitType.Terran_Medic) && building.canTrain(UnitType.Terran_Medic))
+				if(this.getAllUnitsByType(Information.UnitType.MEDIC).size() < this.getAllUnitsByType(Information.UnitType.MARINE).size()*.2 && !this.isProducing(UnitType.Terran_Medic) && building.canTrain(UnitType.Terran_Medic))
 				{
 					if(building.isIdle() && building.canTrain(UnitType.Terran_Medic))
 					{
 						building.train(UnitType.Terran_Medic);
+					}
+				}
+				else if(this.getAllUnitsByType(Information.UnitType.FIREBAT).size() < this.getAllUnitsByType(Information.UnitType.MARINE).size()*.2 && building.canTrain(UnitType.Terran_Firebat))
+				{
+					if(building.isIdle() && building.canTrain(UnitType.Terran_Firebat))
+					{
+						building.train(UnitType.Terran_Firebat);
 					}
 				}
 				else

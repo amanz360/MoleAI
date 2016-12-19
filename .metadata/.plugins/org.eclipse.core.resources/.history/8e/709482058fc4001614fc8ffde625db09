@@ -1,0 +1,345 @@
+
+
+import java.util.ArrayList;
+import java.util.List;
+
+import bwapi.*;
+
+
+public class MoleUnit{
+
+	Unit myUnit;
+	PositionOrUnit myTarget;
+	Information.UnitType type;
+	Information.Job job;
+	
+	
+	MoleUnit(Unit gameUnit, Information.UnitType _type)
+	{
+		myUnit = gameUnit;
+		type = _type;
+		job = Information.Job.UNDEFINED;
+		myTarget = null;
+	}
+	
+	MoleUnit(Unit gameUnit, Information.UnitType _type, Information.Job _job)
+	{
+		myUnit = gameUnit;
+		type = _type;
+		job = _job;
+		myTarget = null;
+	}
+	
+	public void setJob(Information.Job newJob)
+	{
+		job = newJob;
+	}
+	
+	public List<Unit> getEnemiesInRadius(int radius)
+	{
+		List<Unit> nearby = myUnit.getUnitsInRadius(radius);
+		ArrayList<Unit> enemies = new ArrayList<Unit>();
+		for(Unit unit : nearby)
+		{
+			if(unit.getPlayer().isEnemy(myUnit.getPlayer()))
+			{
+				enemies.add(unit);
+			}
+		}
+		
+		return enemies;
+	}
+	
+	public List<Unit> getAlliesInRadius(int radius)
+	{
+		List<Unit> nearby = myUnit.getUnitsInRadius(radius);
+		ArrayList<Unit> allies = new ArrayList<Unit>();
+		for(Unit unit : nearby)
+		{
+			if(myUnit.getPlayer().equals(unit.getPlayer()))
+			{
+				allies.add(unit);
+			}
+		}
+		
+		return allies;
+	}
+	
+	public Unit getClosestEnemyInRadius(int radius)
+	{
+		List<Unit> enemies = getEnemiesInRadius(radius);
+		Unit closest = null;
+		for(Unit enemy : enemies)
+		{
+			if((enemy.isCloaked() || enemy.isBurrowed() && !myUnit.canAttack(enemy))
+			if(closest == null)
+			{
+				closest = enemy;
+			}
+			else if(myUnit.getDistance(enemy) < myUnit.getDistance(closest))
+			{
+				closest = enemy;
+			}
+		}
+		
+		return closest;
+	}
+	
+	public Unit getClosestAllyInRadius(int radius)
+	{
+		List<Unit> allies = getAlliesInRadius(radius);
+		Unit closest = null;
+		for(Unit ally : allies)
+		{
+			if(closest == null)
+			{
+				closest = ally;
+			}else if(myUnit.getDistance(ally) < myUnit.getDistance(closest))
+			{
+				closest = ally;
+			}
+		}
+		
+		return closest;
+	}
+	
+	public Unit getClosestDamagedAllyInRadius(int radius)
+	{
+		List<Unit> allies = getAlliesInRadius(radius);
+		Unit closest = null;
+		//System.out.println("Starting search!");
+		for(Unit ally : allies)
+		{
+			if(!ally.isCompleted())
+			{
+				continue;
+			}
+			//System.out.println("Ally hp: " + ally.getHitPoints());
+			//System.out.println("Ally max hp: " + ally.getType().maxHitPoints());
+			//System.out.println(closest == null);
+			if(closest == null && ally.getHitPoints() < ally.getType().maxHitPoints())
+			{
+			//	System.out.println("Found one!");
+				closest = ally;
+			}else if(closest != null && myUnit.getDistance(ally) < myUnit.getDistance(closest) && ally.getHitPoints() < ally.getType().maxHitPoints())
+			{
+			//	System.out.println("Found a closer one!");
+				closest = ally;
+			}
+		}
+		
+		//System.out.println("Finished searching");
+		return closest;
+	}
+	
+	public static Position getCenterOfUnits(List<MoleUnit> units)
+	{
+		if(units.size() == 0)
+		{
+			return null;
+		}
+		int totalX = 0, totalY = 0;
+		for(MoleUnit unit : units)
+		{
+			totalX += unit.myUnit.getX();
+			totalY += unit.myUnit.getY();
+		}
+		Position center = new Position(totalX/units.size(), totalY/units.size());
+		return center;
+	}
+	
+	public void smartAttackUnit(Unit target, Game game)
+	{
+		if(myUnit == null || target == null)
+		{
+			return;
+		}
+		
+		// if we have issued a command to this unit already this frame, ignore this one
+	    if (myUnit.getLastCommandFrame() >= game.getFrameCount() || myUnit.isAttackFrame() || myUnit.isStartingAttack())
+	    {
+	        return;
+	    }
+	    
+	    // get the unit's current command
+	    UnitCommand currentCommand = myUnit.getLastCommand();
+	    
+	   // System.out.println("Last command: " + currentCommand.toString());
+
+	    // if we've already told this unit to attack this target, ignore this command
+	    if (currentCommand.getUnitCommandType() == UnitCommandType.Attack_Unit && currentCommand.getTarget() == target)
+	    {
+	        return;
+	    }
+	    
+	    // if nothing prevents it, attack the target
+	    //myUnit.attack(target);
+	    myUnit.issueCommand(UnitCommand.attack(myUnit, new PositionOrUnit(target)));
+	}
+	
+	public void smartAttackMove(Position target, Game game)
+	{
+		if(myUnit == null || target == null)
+		{
+			return;
+		}
+		
+		// if we have issued a command to this unit already this frame, ignore this one
+	    if (myUnit.getLastCommandFrame() >= game.getFrameCount() || myUnit.isAttackFrame())
+	    {
+	        return;
+	    }
+	    
+	    // get the unit's current command
+	   UnitCommand currentCommand = myUnit.getLastCommand();
+
+	    // if we've already told this unit to attack this target, ignore this command
+	    if (currentCommand.getUnitCommandType() == UnitCommandType.Attack_Move && currentCommand.getTargetPosition() == target)
+	    {
+	        return;
+	    }
+	    
+	    // if nothing prevents it, attack the target
+	    myUnit.attack(target);
+	}
+	
+	public void smartMove(Position target, Game game)
+	{
+		if(myUnit == null || target == null)
+		{
+			return;
+		}
+		
+		// if we have issued a command to this unit already this frame, ignore this one
+	    if (myUnit.getLastCommandFrame() >= game.getFrameCount() || myUnit.isAttackFrame())
+	    {
+	        return;
+	    }
+	    
+	    // get the unit's current command
+	    UnitCommand currentCommand = myUnit.getLastCommand();
+
+	    // if we've already told this unit to move to this target, ignore this command
+	    if (currentCommand.getUnitCommandType() == UnitCommandType.Move &&	currentCommand.getTargetPosition() == target)
+	    {
+	        return;
+	    }
+	    
+	    // if nothing prevents it, move to the target
+	    myUnit.move(target);
+	}
+	
+	public void smartRightClick(Unit target, Game game)
+	{
+		if(myUnit == null || target == null)
+		{
+			return;
+		}
+		
+		// if we have issued a command to this unit already this frame, ignore this one
+	    if (myUnit.getLastCommandFrame() >= game.getFrameCount() || myUnit.isAttackFrame())
+	    {
+	        return;
+	    }
+	    
+	    // get the unit's current command
+	    UnitCommand currentCommand = myUnit.getLastCommand();
+
+	    // if we've already told this unit to click this target, ignore this command
+	    if (currentCommand.getUnitCommandType() == UnitCommandType.Right_Click_Unit &&	currentCommand.getTargetPosition() == target.getPosition())
+	    {
+	        return;
+	    }
+	    
+	    // if nothing prevents it, click the target
+	    myUnit.rightClick(target);
+	}
+	
+	public void smartRepair(Unit target, Game game)
+	{
+		if(myUnit == null || target == null)
+		{
+			return;
+		}
+		
+		// if we have issued a command to this unit already this frame, ignore this one
+	    if (myUnit.getLastCommandFrame() >= game.getFrameCount() || myUnit.isAttackFrame())
+	    {
+	        return;
+	    }
+	    
+	    // get the unit's current command
+	    UnitCommand currentCommand = myUnit.getLastCommand();
+
+	    // if we've already told this unit to repair this target, ignore this command
+	    if (currentCommand.getUnitCommandType() == UnitCommandType.Repair &&	currentCommand.getTarget() == target)
+	    {
+	        return;
+	    }
+	    
+	    // if nothing prevents it, repair the target
+	    myUnit.repair(target);
+	}
+	
+	public void smartKiteTarget(Unit target, Game game)
+	{
+
+	    if (myUnit == null || target == null)
+	    {
+	        return;
+	    }
+	    
+	    if(myUnit.getLastCommandFrame() >= game.getFrameCount() - 13)
+	    {
+	    	return;
+	    }
+
+		double range = myUnit.getType().groundWeapon().maxRange();
+		
+		if(myUnit.getType() == UnitType.Protoss_Dragoon && game.self().getUpgradeLevel(UpgradeType.Singularity_Charge) > 0)
+		{
+			range = 6 * 32; 
+		}
+		
+		// determine whether the target can be kited
+		if(range <= target.getType().groundWeapon().maxRange())
+		{
+			//if we can't kite it, there's no point
+			this.smartAttackUnit(target, game);
+			return;
+		}
+		
+		boolean kite = true;
+		//double dist = myUnit.getDistance(target);
+		//double speed = myUnit.getType().topSpeed();
+		
+		//double timeToEnter = (0.0 > (dist - range) / speed) ? 0.0 : (dist - range) / speed;
+		if(myUnit.getGroundWeaponCooldown() == 0)
+		{
+			kite = false;
+		}
+		
+		if(target.getType().isBuilding())
+		{
+			kite = false;
+		}
+		
+		// if we can't shoot, run away
+		if(kite)
+		{
+			int fleeX = myUnit.getPosition().getX() - target.getPosition().getX() + myUnit.getPosition().getX();
+			int fleeY = myUnit.getPosition().getY() - target.getPosition().getY() + myUnit.getPosition().getY();
+			Position fleePosition = new Position(fleeX, fleeY);
+			this.smartMove(fleePosition, game);
+		}
+		// otherwise, shoot
+		else
+		{
+			
+			//System.out.println("Sending attack order");
+			this.smartAttackUnit(target, game);
+			//myUnit.issueCommand(UnitCommand.attack(myUnit, new PositionOrUnit(target)));
+		}
+	}
+
+}

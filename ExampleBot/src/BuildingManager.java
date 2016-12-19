@@ -12,10 +12,12 @@ import bwapi.UnitType;
 public class BuildingManager 
 {
 	private ArrayList<Building> buildingQueue;
+	public Base main;
 	
 	public BuildingManager()
 	{
 		buildingQueue = new ArrayList<Building>();
+		main = null;
 	}
 	
 	public void update(Game game, Player self)
@@ -182,7 +184,14 @@ public class BuildingManager
 				b.builderUnit.job = Information.Job.MINERALS;
 				if(b.buildingUnit.getType() != UnitType.Terran_Command_Center)
 				{
-					b.base.buildingMemory.add(b.buildingUnit);
+					if(b.buildingUnit.getType() == UnitType.Terran_Barracks)
+					{
+						main.buildingMemory.add(b.buildingUnit);
+					}
+					else
+					{
+						b.base.buildingMemory.add(b.buildingUnit);
+					}
 				}
 				//System.out.println("buildingMemory size: " + b.base.buildingMemory.size());
 				toRemove.add(b);
@@ -190,6 +199,19 @@ public class BuildingManager
 		}
 		
 		buildingQueue.removeAll(toRemove);
+	}
+	
+	public boolean isQueued(UnitType buildingType, Base base)
+	{
+		for(Building b : buildingQueue)
+		{
+			if(b.type.toString().equals(buildingType.toString()) && b.base.commandCenter.getID() == base.commandCenter.getID())
+			{
+				return true;
+			}
+		}
+		
+		return false;
 	}
 	
 	public boolean isQueued(UnitType buildingType)
