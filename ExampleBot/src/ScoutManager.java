@@ -95,6 +95,7 @@ public class ScoutManager
 		if(!scoutWorker.myUnit.exists())
 		{
 			scoutWorker = null;
+			scoutDest = null;
 			return;
 		}		
 		
@@ -110,6 +111,11 @@ public class ScoutManager
 				scoutWorker.smartMove(scoutDest.toPosition(), game);
 				return;
 			}
+			/*else if(scoutWorker.myUnit.getDistance(scoutDest.toPosition()) < 100 && enemyBases.contains(scoutDest))
+			{
+				Unit closestEnemy = scoutWorker.getClosestEnemyInRadius(100);
+				scoutWorker.smartAttackUnit(closestEnemy, game);
+			}*/
 			else
 			{
 				if(enemyWorkerInRadius(game) && !enemyBases.contains(scoutDest))
@@ -118,7 +124,7 @@ public class ScoutManager
 					enemyBases.add(scoutDest);
 				}
 				System.out.println("Scout reached destination: " + scoutDest.toString());
-				scoutDest = null;
+				//scoutDest = null;
 			}
 		}
 		

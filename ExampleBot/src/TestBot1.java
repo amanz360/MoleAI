@@ -52,14 +52,13 @@ public class TestBot1 extends DefaultBWListener {
         {
         	strategy.addUnit(new MoleUnit(unit, Information.UnitType.MEDIC));
         }
-        
     }
 
     @Override
     public void onStart() {
         game = mirror.getGame();
         self = game.self();
-        game.setLocalSpeed(20); 
+        game.setLocalSpeed(0); 
         strategy = new StrategyManager();
             
 
