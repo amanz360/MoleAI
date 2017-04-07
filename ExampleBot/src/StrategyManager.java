@@ -1,6 +1,7 @@
 import bwapi.*;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.HashMap;
 
 public class StrategyManager {
 	
@@ -8,17 +9,20 @@ public class StrategyManager {
 	public MoleUnit expansionBuilder;
 	public HashSet<Unit> buildings;
 	public HashSet<MoleUnit> allUnits;
-	public ArrayList<Base> bases;
+	//public ArrayList<Base> bases;
 	public ScoutManager scouter;
+	public HashMap blackboard;
 	
 	public StrategyManager()
 	{
 		expansionBuilder = null;
 		buildings = new HashSet<Unit>();
 		allUnits = new HashSet<MoleUnit>();
-		bases = new ArrayList<Base>();
+		//bases = new ArrayList<Base>();
 		buildingManager = new BuildingManager();
 		scouter = new ScoutManager();
+		blackboard = new HashMap();
+		blackboard.put("squads", new ArrayList<Squad>());
 	}
 	
 	public void addBuilding(Unit building)
@@ -29,13 +33,13 @@ public class StrategyManager {
 		}
 	}
 	
-	public void addBase(Base b)
+	/*public void addBase(Base b)
 	{
 		if(!bases.contains(b))
 		{
 			bases.add(b);
 		}
-	}
+	}*/
 	
 	public boolean moleContains(Unit toFind)
 	{
@@ -51,13 +55,16 @@ public class StrategyManager {
 	
 	public void addUnit(MoleUnit newUnit)
 	{
-
-		allUnits.add(newUnit);
+		if(!this.moleContains(newUnit.myUnit))
+		{
+			allUnits.add(newUnit);
+		}
+		
 		//System.out.println("New unit's job: " + newUnit.job.toString());
 
 		
 		// Distribute unit into appropriate base
-		for(Base b : bases)
+		/*for(Base b : bases)
 		{
 			if(newUnit.myUnit.getDistance(b.commandCenter) < 5)
 			{
@@ -97,7 +104,7 @@ public class StrategyManager {
 					return;
 				}
 			}
-		}
+		}*/
 	}
 	
 	public void update(Game game, Player self)
@@ -108,11 +115,11 @@ public class StrategyManager {
 		}
 		scouter.update(game);
 		buildingManager.update(game, self);
-		checkForNewExpansions();
-		cleanDeadBases();
+		//checkForNewExpansions();
+		//cleanDeadBases();
 		cleanDeadUnits();
-		runBases(game, self);
-		setBuildGoals(self, game);
+		//runBases(game, self);
+		//setBuildGoals(self, game);
 		researchTech(self);
 	}
 	
@@ -127,7 +134,7 @@ public class StrategyManager {
 		}
 	}
 	
-	public void checkForNewExpansions()
+	/*public void checkForNewExpansions()
 	{
 		for(Unit building : this.buildings)
 		{
@@ -150,9 +157,9 @@ public class StrategyManager {
 				}
 			}
 		}
-	}
+	}*/
 	
-	public void runBases(Game game, Player self)
+	/*public void runBases(Game game, Player self)
 	{
 		cleanDeadBases();
 		boolean shouldAttack = shouldAttackNow();
@@ -198,7 +205,7 @@ public class StrategyManager {
 			}
 			b.manageMarines(game);
 		}
-	}
+	}*/
 	
 	boolean canBuild(Player self, UnitType buildingType)
 	{
@@ -212,7 +219,7 @@ public class StrategyManager {
 		}
 	}
 	
-	public void setBuildGoals(Player self, Game game)
+	/*public void setBuildGoals(Player self, Game game)
 	{
 		
 		for(Base b : bases)
@@ -287,7 +294,7 @@ public class StrategyManager {
 			buildingManager.addBuildingTask(UnitType.Terran_Command_Center, expansionSpot, bases.get(bases.size()-1));
 						
 		}
-	}
+	}*/
 	
 	public void researchTech(Player self)
 	{
@@ -330,7 +337,7 @@ public class StrategyManager {
 		}
 	}
 	
-	public int totalUnitCount(Information.UnitType type)
+	/*public int totalUnitCount(Information.UnitType type)
 	{
 		int count = 0;
 		for(Base b : bases)
@@ -339,9 +346,9 @@ public class StrategyManager {
 		}
 		
 		return count;
-	}
+	}*/
 	
-	public int totalBuildingCount(UnitType type)
+	/*public int totalBuildingCount(UnitType type)
 	{
 		int count = 0;
 		for(Base b : bases)
@@ -349,10 +356,10 @@ public class StrategyManager {
 			count += b.getBuildingsByType(type).size();
 		}
 		return count;
-	}
+	}*/
 
 	
-	private void cleanDeadBases()
+	/*private void cleanDeadBases()
 	{
 		ArrayList<Base> toRemove = new ArrayList<Base>();
 		for(Base b : bases)
@@ -363,7 +370,7 @@ public class StrategyManager {
 			}
 		}
 		bases.remove(toRemove);
-	}
+	}*/
 	
 	public boolean shouldAttackNow()
 	{
