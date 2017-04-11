@@ -7,9 +7,11 @@ import java.util.HashMap;
 public class StrategyManager {
 	
 	public BuildingManager buildingManager;
+	public BuildOrderManager buildOrderManager;
 	public MoleUnit expansionBuilder;
 	public HashSet<Unit> buildings;
 	public ArrayList<Unit> depots;
+	public SquadManager squadManager;
 	public HashSet<MoleUnit> allUnits;
 	//public ArrayList<Base> bases;
 	public ScoutManager scouter;
@@ -26,6 +28,8 @@ public class StrategyManager {
 		scouter = new ScoutManager();
 		blackboard = new HashMap<String, Object>();
 		blackboard.put("squads", new ArrayList<Squad>());
+		buildOrderManager = new BuildOrderManager();
+		squadManager = new SquadManager();
 	}
 	
 	public void addBuilding(Unit building)
@@ -82,7 +86,7 @@ public class StrategyManager {
 		if(!this.moleContains(newUnit.myUnit))
 		{
 			allUnits.add(newUnit);
-			System.out.println("Adding new unit to all units. unit type: " + newUnit.type);
+			//System.out.println("Adding new unit to all units. unit type: " + newUnit.type);
 			if(newUnit.type == Information.UnitType.WORKER)
 			{
 				for(int i = 0; i < depots.size(); i++)
@@ -96,6 +100,10 @@ public class StrategyManager {
 						break;
 					}
 				}
+			}
+			else if(newUnit.type == Information.UnitType.MARINE)
+			{
+				squadManager.allocateUnit(newUnit);
 			}
 		}
 		
@@ -145,6 +153,7 @@ public class StrategyManager {
 			}
 		}*/
 	}
+	
 	public void mineClosestMineral(MoleUnit worker, Unit depot, Game game)
 	{
 		if(worker.myUnit.getDistance(depot) > 200)
@@ -239,6 +248,22 @@ public class StrategyManager {
 			blackboard.put("depot0workers", mainWorkers);
 		}
 		scouter.update(game);
+		if(self.supplyUsed() >= self.supplyTotal() - 2 && self.minerals() >= 100 && !buildingManager.isQueued(UnitType.Terran_Supply_Depot))
+		{
+			buildingManager.addBuildingTask(UnitType.Terran_Supply_Depot);
+		}
+		if(buildOrderManager.canBuildNext(self, mainWorkers.size()))
+		{
+			UnitType toBuild = buildOrderManager.popItem();
+			buildingManager.addBuildingTask(toBuild);
+		}
+		for(Unit building : buildings)
+		{
+			if(building.canTrain(UnitType.Terran_Marine) && !building.isTraining())
+			{
+				building.train(UnitType.Terran_Marine);
+			}
+		}
 		buildingManager.update(game, mainWorkers, self);
 		collectResources(game);
 		saturateDepots(game);
@@ -543,7 +568,7 @@ public class StrategyManager {
 	
 	public void drawUnitInfo(Player self, Game game)
 	{
-		System.out.println("All units size: " + allUnits.size());
+		//System.out.println("All units size: " + allUnits.size());
 		for (MoleUnit myUnit : allUnits) {
 
 	          if(myUnit.myUnit.getType().isBuilding() || !myUnit.myUnit.isCompleted())	continue;

@@ -58,6 +58,9 @@ public class TestBot1 extends DefaultBWListener {
         self = game.self();
         game.setLocalSpeed(20); 
         strategy = new StrategyManager();
+        strategy.buildOrderManager.addItem(UnitType.Terran_Barracks, 10);
+        strategy.buildOrderManager.addItem(UnitType.Terran_Barracks, 12);
+        strategy.buildOrderManager.addItem(UnitType.Terran_Barracks, 16);
             
 
         //Use BWTA to analyze map

@@ -1,6 +1,7 @@
 import bwapi.*;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 
 public class Squad
 {
@@ -33,5 +34,40 @@ public class Squad
 	public boolean isFull()
 	{
 		return units.size() == capacity;
+	}
+	
+	public Position getCenterOfSquad()
+	{
+		List<MoleUnit> myUnits = new ArrayList<MoleUnit>(units);
+		return MoleUnit.getCenterOfUnits(myUnits);
+	}
+	
+	public Unit closestEnemy(Game game)
+	{
+		Position center = getCenterOfSquad();
+		List<Unit> enemies = game.getUnitsInRadius(center, 500);
+		
+		Unit closest = null;
+		for(Unit enemy : enemies)
+		{
+			if(enemy.getPlayer() != game.enemy())
+			{
+				continue;
+			}
+			if((enemy.isCloaked() || enemy.isBurrowed()) && !enemy.isDetected())
+			{
+				continue;
+			}
+			if(closest == null)
+			{
+				closest = enemy;
+			}
+			else if(enemy.getDistance(center) < closest.getDistance(center))
+			{
+				closest = enemy;
+			}
+		}
+		
+		return closest;
 	}
 }
