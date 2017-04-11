@@ -1,0 +1,22 @@
+#Mon Nov 22 22:04:05 CET 2010
+repositories/file\:_home_knuckles_Desktop_win32.win32.x86_JBTEditor/description=
+repositories/file\:_home_knuckles_Desktop_win32.win32.x86_JBTEditor/name=Bundle pool
+repositories/http\:__download.eclipse.org_eclipse_updates_3.5/uri=http\://download.eclipse.org/eclipse/updates/3.5
+repositories/http\:__download.eclipse.org_eclipse_updates_3.5/enabled=false
+repositories/file\:_home_knuckles_Desktop_win32.win32.x86_JBTEditor_p2_org.eclipse.equinox.p2.core_cache/provider=
+repositories/file\:_home_knuckles_Desktop_win32.win32.x86_JBTEditor_p2_org.eclipse.equinox.p2.core_cache/version=1.0.0
+repositories/file\:_home_knuckles_Desktop_win32.win32.x86_JBTEditor_p2_org.eclipse.equinox.p2.core_cache/name=download cache
+repositories/file\:_home_knuckles_Desktop_win32.win32.x86_JBTEditor/type=org.eclipse.equinox.p2.artifact.repository.simpleRepository
+eclipse.preferences.version=1
+repositories/file\:_home_knuckles_Desktop_win32.win32.x86_JBTEditor_p2_org.eclipse.equinox.p2.core_cache/enabled=true
+repositories/file\:_home_knuckles_Desktop_win32.win32.x86_JBTEditor_p2_org.eclipse.equinox.p2.core_cache/type=org.eclipse.equinox.p2.artifact.repository.simpleRepository
+repositories/file\:_home_knuckles_Desktop_win32.win32.x86_JBTEditor_p2_org.eclipse.equinox.p2.core_cache/uri=file\:/home/knuckles/Desktop/win32.win32.x86/JBTEditor/p2/org.eclipse.equinox.p2.core/cache/
+repositories/file\:_home_knuckles_Desktop_win32.win32.x86_JBTEditor/version=1
+repositories/file\:_home_knuckles_Desktop_win32.win32.x86_JBTEditor/isSystem=true
+repositories/file\:_home_knuckles_Desktop_win32.win32.x86_JBTEditor/enabled=true
+repositories/http\:__download.eclipse.org_eclipse_updates_3.5/isSystem=false
+repositories/file\:_home_knuckles_Desktop_win32.win32.x86_JBTEditor/uri=file\:/home/knuckles/Desktop/win32.win32.x86/JBTEditor/
+repositories/file\:_home_knuckles_Desktop_win32.win32.x86_JBTEditor_p2_org.eclipse.equinox.p2.core_cache/suffix=artifacts.xml
+repositories/file\:_home_knuckles_Desktop_win32.win32.x86_JBTEditor_p2_org.eclipse.equinox.p2.core_cache/description=
+repositories/file\:_home_knuckles_Desktop_win32.win32.x86_JBTEditor/provider=
+repositories/file\:_home_knuckles_Desktop_win32.win32.x86_JBTEditor_p2_org.eclipse.equinox.p2.core_cache/isSystem=true

@@ -7,7 +7,7 @@ public class Building
 	      
 		public TilePosition     desiredPosition;
 		public TilePosition     finalPosition;
-		public Base				base;
+		//public Base				base;
 		public Position         position;
 		public UnitType         type;
 		public Unit             buildingUnit;
@@ -29,7 +29,7 @@ public class Building
 			this.status = Information.BuildingStatus.UNASSIGNED;
 			this.buildCommandGiven = false;
 			this.underConstruction = false;
-			this.base = null;
+			//this.base = null;
 	    }
 		
 		public Building(UnitType type)
@@ -44,7 +44,7 @@ public class Building
 			this.status = Information.BuildingStatus.UNASSIGNED;
 			this.buildCommandGiven = false;
 			this.underConstruction = false;
-			this.base = null;
+			//this.base = null;
 	    } 
 
 		class BuildingData 

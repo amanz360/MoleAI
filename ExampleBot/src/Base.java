@@ -410,7 +410,7 @@ public class Base {
 					{
 						marine.myTarget = new PositionOrUnit(center);
 						marine.job = Information.Job.REGROUP;
-						marine.smartAttackMove(center, game);
+						marine.smartMove(center, game);
 					}
 					else
 					{

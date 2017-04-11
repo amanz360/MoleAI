@@ -1,47 +1,79 @@
 import bwapi.*;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Map;
+import java.util.HashMap;
 
 public class StrategyManager {
 	
 	public BuildingManager buildingManager;
+	public BuildOrderManager buildOrderManager;
 	public MoleUnit expansionBuilder;
 	public HashSet<Unit> buildings;
+	public ArrayList<Unit> depots;
+	public SquadManager squadManager;
 	public HashSet<MoleUnit> allUnits;
-	public ArrayList<Base> bases;
+	//public ArrayList<Base> bases;
 	public ScoutManager scouter;
+	public Map<String, Object> blackboard;
 	
 	public StrategyManager()
 	{
 		expansionBuilder = null;
 		buildings = new HashSet<Unit>();
+		depots = new ArrayList<Unit>();
 		allUnits = new HashSet<MoleUnit>();
-		bases = new ArrayList<Base>();
+		//bases = new ArrayList<Base>();
 		buildingManager = new BuildingManager();
 		scouter = new ScoutManager();
+		blackboard = new HashMap<String, Object>();
+		blackboard.put("squads", new ArrayList<Squad>());
+		buildOrderManager = new BuildOrderManager();
+		squadManager = new SquadManager();
 	}
 	
 	public void addBuilding(Unit building)
 	{
-		if(!buildings.contains(building))
+		if(!buildings.contains(building) && building.getType() != UnitType.Terran_Command_Center)
 		{
 			buildings.add(building);
+			if(building.getType() == UnitType.Terran_Refinery)
+			{
+				for (int i = 0; i < depots.size(); i++)
+				{
+					if(building.getDistance(depots.get(i)) < 100)
+					{
+						ArrayList<Unit> refineries = (ArrayList<Unit>)blackboard.get("depot"+i+"refineries");
+						refineries.add(building);
+						blackboard.put("depot"+i+"refineries", refineries);
+						blackboard.put(building.getID()+"", new ArrayList<MoleUnit>());
+						break;
+					}
+				}
+			}
+		}
+		else if(!depots.contains(building) && building.getType() == UnitType.Terran_Command_Center)
+		{
+			//to access a depot's working SCV's, use blackbloard.get("depot"+<depotIndex>+"workers")
+			depots.add(building);
+			blackboard.put("depot"+(depots.size()-1)+"workers", new ArrayList<MoleUnit>());
+			blackboard.put("depot"+(depots.size()-1)+"refineries", new ArrayList<Unit>());
 		}
 	}
 	
-	public void addBase(Base b)
+	/*public void addBase(Base b)
 	{
 		if(!bases.contains(b))
 		{
 			bases.add(b);
 		}
-	}
+	}*/
 	
 	public boolean moleContains(Unit toFind)
 	{
 		for(MoleUnit unit : allUnits)
 		{
-			if(unit.myUnit == toFind)
+			if(unit.myUnit.getID() == toFind.getID())
 			{
 				return true;
 			}
@@ -51,13 +83,35 @@ public class StrategyManager {
 	
 	public void addUnit(MoleUnit newUnit)
 	{
-
-		allUnits.add(newUnit);
+		if(!this.moleContains(newUnit.myUnit))
+		{
+			allUnits.add(newUnit);
+			//System.out.println("Adding new unit to all units. unit type: " + newUnit.type);
+			if(newUnit.type == Information.UnitType.WORKER)
+			{
+				for(int i = 0; i < depots.size(); i++)
+				{
+					if(newUnit.myUnit.getDistance(depots.get(i)) < 5)
+					{
+						ArrayList<MoleUnit> depotWorkers = (ArrayList<MoleUnit>)blackboard.get("depot"+i+"workers");
+						depotWorkers.add(newUnit);
+						blackboard.put("depot"+i+"workers", depotWorkers);
+						System.out.println("Adding worker to depot: " + i);
+						break;
+					}
+				}
+			}
+			else if(newUnit.type == Information.UnitType.MARINE)
+			{
+				squadManager.allocateUnit(newUnit);
+			}
+		}
+		
 		//System.out.println("New unit's job: " + newUnit.job.toString());
 
 		
 		// Distribute unit into appropriate base
-		for(Base b : bases)
+		/*for(Base b : bases)
 		{
 			if(newUnit.myUnit.getDistance(b.commandCenter) < 5)
 			{
@@ -97,23 +151,128 @@ public class StrategyManager {
 					return;
 				}
 			}
+		}*/
+	}
+	
+	public void mineClosestMineral(MoleUnit worker, Unit depot, Game game)
+	{
+		if(worker.myUnit.getDistance(depot) > 200)
+		{
+			worker.smartMove(depot.getPosition(), game);
+		}
+		
+		if (worker.myUnit.isIdle() || worker.myUnit.isGatheringGas()) {
+            Unit closestMineral = null;
+
+            //find the closest mineral
+            for (Unit neutralUnit : game.getNeutralUnits()) {
+                if (neutralUnit.getType().isMineralField()) {
+                    if (closestMineral == null || worker.myUnit.getDistance(neutralUnit) < worker.myUnit.getDistance(closestMineral)) {
+                        closestMineral = neutralUnit;
+                        worker.myTarget = new PositionOrUnit(closestMineral);
+                    }
+                }
+            }
+
+            //if a mineral patch was found, send the worker to gather it
+            if (closestMineral != null) {
+                worker.smartRightClick(closestMineral, game);
+            }
+        }
+	}
+	public void collectResources(Game game)
+	{
+		for(int i = 0; i < depots.size(); i++)
+		{
+			ArrayList<MoleUnit> depotWorkers = (ArrayList<MoleUnit>)blackboard.get("depot"+i+"workers");
+			for(MoleUnit worker : depotWorkers)
+			{
+				if(worker.job == Information.Job.UNDEFINED)
+				{
+					worker.job = Information.Job.MINERALS;
+				}
+				if(worker.job == Information.Job.MINERALS)
+				{
+					mineClosestMineral(worker,depots.get(i), game);
+				}
+				else if(worker.job == Information.Job.GAS)
+				{
+					for(Unit refinery : (ArrayList<Unit>)blackboard.get("depot"+i+"refineries"))
+					{
+						ArrayList<MoleUnit> gasWorkers = (ArrayList<MoleUnit>)blackboard.get(refinery.getID()+"");
+						if(!gasWorkers.contains(worker) && gasWorkers.size() < 3)
+						{
+							gasWorkers.add(worker);
+							worker.myTarget = new PositionOrUnit(refinery);
+							worker.smartRightClick(refinery, game);
+							blackboard.put(refinery.getID()+"", gasWorkers);
+							break;
+						}
+					}
+					if(worker.myUnit.isIdle() || worker.myUnit.isGatheringMinerals())
+					{
+						worker.smartRightClick(worker.myTarget.getUnit(), game);
+					}
+				}
+			}
+		}
+	}
+	
+	public int workersNeeded(Unit depot)
+	{
+		//TODO: figure out how many workers are needed to saturate remaining mineral patches + gas
+		return 9*2+3;
+	}
+	
+	public void saturateDepots(Game game)
+	{
+		for(int i = 0; i < depots.size(); i++)
+		{
+			if(((ArrayList<MoleUnit>)blackboard.get("depot"+i+"workers")).size() < workersNeeded(depots.get(i)) && canBuild(game.self(), UnitType.Terran_SCV))
+			{
+				if(!depots.get(i).isTraining())
+				{
+					depots.get(i).train(UnitType.Terran_SCV);
+				}
+			}
 		}
 	}
 	
 	public void update(Game game, Player self)
 	{
-		if(scouter.noBuildingsKnown() && scouter.scoutWorker == null && this.totalUnitCount(Information.UnitType.WORKER) > 6)
+		ArrayList<MoleUnit> mainWorkers = (ArrayList<MoleUnit>)blackboard.get("depot0workers");
+		if(scouter.noBuildingsKnown() && scouter.scoutWorker == null && mainWorkers.size() >= 9)
 		{
-			scouter.changeScout(bases.get(0).popWorker());
+			scouter.changeScout(mainWorkers.get(0));
+			mainWorkers.remove(0);
+			blackboard.put("depot0workers", mainWorkers);
 		}
 		scouter.update(game);
-		buildingManager.update(game, self);
-		checkForNewExpansions();
-		cleanDeadBases();
-		cleanDeadUnits();
-		runBases(game, self);
-		setBuildGoals(self, game);
-		researchTech(self);
+		if(self.supplyUsed() >= self.supplyTotal() - 2 && self.minerals() >= 100 && !buildingManager.isQueued(UnitType.Terran_Supply_Depot))
+		{
+			buildingManager.addBuildingTask(UnitType.Terran_Supply_Depot);
+		}
+		if(buildOrderManager.canBuildNext(self, mainWorkers.size()))
+		{
+			UnitType toBuild = buildOrderManager.popItem();
+			buildingManager.addBuildingTask(toBuild);
+		}
+		for(Unit building : buildings)
+		{
+			if(building.canTrain(UnitType.Terran_Marine) && !building.isTraining())
+			{
+				building.train(UnitType.Terran_Marine);
+			}
+		}
+		buildingManager.update(game, mainWorkers, self);
+		collectResources(game);
+		saturateDepots(game);
+		//checkForNewExpansions();
+		//cleanDeadBases();
+		//cleanDeadUnits();
+		//runBases(game, self);
+		//setBuildGoals(self, game);
+		//researchTech(self);
 	}
 	
 	public void cleanDeadUnits()
@@ -127,7 +286,7 @@ public class StrategyManager {
 		}
 	}
 	
-	public void checkForNewExpansions()
+	/*public void checkForNewExpansions()
 	{
 		for(Unit building : this.buildings)
 		{
@@ -150,9 +309,9 @@ public class StrategyManager {
 				}
 			}
 		}
-	}
+	}*/
 	
-	public void runBases(Game game, Player self)
+	/*public void runBases(Game game, Player self)
 	{
 		cleanDeadBases();
 		boolean shouldAttack = shouldAttackNow();
@@ -198,7 +357,7 @@ public class StrategyManager {
 			}
 			b.manageMarines(game);
 		}
-	}
+	}*/
 	
 	boolean canBuild(Player self, UnitType buildingType)
 	{
@@ -212,7 +371,7 @@ public class StrategyManager {
 		}
 	}
 	
-	public void setBuildGoals(Player self, Game game)
+	/*public void setBuildGoals(Player self, Game game)
 	{
 		
 		for(Base b : bases)
@@ -287,9 +446,9 @@ public class StrategyManager {
 			buildingManager.addBuildingTask(UnitType.Terran_Command_Center, expansionSpot, bases.get(bases.size()-1));
 						
 		}
-	}
+	}*/
 	
-	public void researchTech(Player self)
+	/*public void researchTech(Player self)
 	{
 		if(self.getUpgradeLevel(UpgradeType.Caduceus_Reactor) == 0)
 		{
@@ -328,9 +487,9 @@ public class StrategyManager {
 				}
 			}
 		}
-	}
+	}*/
 	
-	public int totalUnitCount(Information.UnitType type)
+	/*public int totalUnitCount(Information.UnitType type)
 	{
 		int count = 0;
 		for(Base b : bases)
@@ -339,9 +498,9 @@ public class StrategyManager {
 		}
 		
 		return count;
-	}
+	}*/
 	
-	public int totalBuildingCount(UnitType type)
+	/*public int totalBuildingCount(UnitType type)
 	{
 		int count = 0;
 		for(Base b : bases)
@@ -349,10 +508,10 @@ public class StrategyManager {
 			count += b.getBuildingsByType(type).size();
 		}
 		return count;
-	}
+	}*/
 
 	
-	private void cleanDeadBases()
+	/*private void cleanDeadBases()
 	{
 		ArrayList<Base> toRemove = new ArrayList<Base>();
 		for(Base b : bases)
@@ -363,9 +522,9 @@ public class StrategyManager {
 			}
 		}
 		bases.remove(toRemove);
-	}
+	}*/
 	
-	public boolean shouldAttackNow()
+	/*public boolean shouldAttackNow()
 	{
 		if(scouter.noBuildingsKnown())
 		{
@@ -378,7 +537,7 @@ public class StrategyManager {
 		{
 			return false;
 		}
-	}
+	}*/
 	
 	public boolean shouldExpandNow(Player player, Game game)
 	{
@@ -409,6 +568,7 @@ public class StrategyManager {
 	
 	public void drawUnitInfo(Player self, Game game)
 	{
+		//System.out.println("All units size: " + allUnits.size());
 		for (MoleUnit myUnit : allUnits) {
 
 	          if(myUnit.myUnit.getType().isBuilding() || !myUnit.myUnit.isCompleted())	continue;

@@ -14,8 +14,9 @@ public class MoleUnit{
 	Information.Job job;
 	
 	
+	
 	MoleUnit(Unit gameUnit, Information.UnitType _type)
-	{
+	{ 
 		myUnit = gameUnit;
 		type = _type;
 		job = Information.Job.UNDEFINED;
