@@ -12,21 +12,21 @@ import bwapi.UnitType;
 public class BuildingManager 
 {
 	private ArrayList<Building> buildingQueue;
-	public Base main;
+	//public Base main;
 	
 	public BuildingManager()
 	{
 		buildingQueue = new ArrayList<Building>();
-		main = null;
+		//main = null;
 	}
 	
-	public void update(Game game, Player self)
+	public void update(Game game, ArrayList<MoleUnit> mainWorkers, Player self)
 	{
 		validateBuildings();					// check to see if assigned workers have died en route or while constructing
-		assignWorkersToUnassignedBuildings();   // assign workers to the unassigned buildings and label them 'planned'    
+		assignWorkersToUnassignedBuildings(mainWorkers);   // assign workers to the unassigned buildings and label them 'planned'    
 	    constructAssignedBuildings(game);       // for each planned building, if the worker isn't constructing, send the command    
 	    checkForStartedConstruction(self);      // check to see if any buildings have started construction and update data structures    
-	    checkForDeadTerranBuilders(game);           // if we are terran and a building is under construction without a worker, assign a new one    
+	    checkForDeadTerranBuilders(game, mainWorkers);           // if we are terran and a building is under construction without a worker, assign a new one    
 	    checkForCompletedBuildings();           // check to see if any buildings have completed and update data structures
 	}
 	
@@ -50,7 +50,7 @@ public class BuildingManager
 		buildingQueue.removeAll(buildingsToRemove);
 	}
 	
-	public void assignWorkersToUnassignedBuildings()
+	public void assignWorkersToUnassignedBuildings(ArrayList<MoleUnit> mainWorkers)
 	{
 		for(Building b : buildingQueue)
 		{
@@ -64,7 +64,7 @@ public class BuildingManager
 				continue;
 			}
 			//System.out.println("Picking builder!");
-			MoleUnit workerToAssign = getBuilder(b);
+			MoleUnit workerToAssign = getBuilder(mainWorkers);
 			//System.out.println("Builder found!");
 			if(workerToAssign != null)
 			{
@@ -144,7 +144,7 @@ public class BuildingManager
 		}
 	}
 	
-	void checkForDeadTerranBuilders(Game game)
+	void checkForDeadTerranBuilders(Game game, ArrayList<MoleUnit> mainWorkers)
 	{
 		for(Building b : buildingQueue)
 		{
@@ -155,7 +155,7 @@ public class BuildingManager
 			
 			if(!b.builderUnit.myUnit.exists())
 			{
-				MoleUnit replacement = getBuilder(b);
+				MoleUnit replacement = getBuilder(mainWorkers);
 				if(replacement != null)
 				{
 					System.out.println("Replacing dead builder");
@@ -182,17 +182,6 @@ public class BuildingManager
 			{
 				System.out.println("Building completed: " + b.type.toString());
 				b.builderUnit.job = Information.Job.MINERALS;
-				if(b.buildingUnit.getType() != UnitType.Terran_Command_Center)
-				{
-					if(b.buildingUnit.getType() == UnitType.Terran_Barracks)
-					{
-						main.buildingMemory.add(b.buildingUnit);
-					}
-					else
-					{
-						b.base.buildingMemory.add(b.buildingUnit);
-					}
-				}
 				//System.out.println("buildingMemory size: " + b.base.buildingMemory.size());
 				toRemove.add(b);
 			}
@@ -201,7 +190,7 @@ public class BuildingManager
 		buildingQueue.removeAll(toRemove);
 	}
 	
-	public boolean isQueued(UnitType buildingType, Base base)
+	/*public boolean isQueued(UnitType buildingType, Base base)
 	{
 		for(Building b : buildingQueue)
 		{
@@ -212,7 +201,7 @@ public class BuildingManager
 		}
 		
 		return false;
-	}
+	}*/
 	
 	public boolean isQueued(UnitType buildingType)
 	{
@@ -237,10 +226,10 @@ public class BuildingManager
 		buildingQueue.add(newBuilding);
 	}
 	
-	public void addBuildingTask(UnitType buildingType, Base b)
+	public void addBuildingTask(UnitType buildingType)
 	{
 		Building newBuilding = new Building(buildingType);
-		newBuilding.base = b;
+		//newBuilding.base = b;
 		newBuilding.status = Information.BuildingStatus.UNASSIGNED;
 		buildingQueue.add(newBuilding);
 		System.out.println("Unassigned building added to queue: " + buildingType);
@@ -248,10 +237,10 @@ public class BuildingManager
 	}
 	
 
-	public void addBuildingTask(UnitType buildingType, TilePosition location, Base b)
+	public void addBuildingTask(UnitType buildingType, TilePosition location)
 	{
 		Building newBuilding = new Building(buildingType);
-		newBuilding.base = b;
+		//newBuilding.base = b;
 		newBuilding.desiredPosition = location;
 		newBuilding.status = Information.BuildingStatus.UNASSIGNED;
 		buildingQueue.add(newBuilding);
@@ -259,31 +248,17 @@ public class BuildingManager
 		System.out.println("Queue size: " + buildingQueue.size());
 	}
 	
-	public MoleUnit getBuilder(Building b)
+	public MoleUnit getBuilder(ArrayList<MoleUnit> mainWorkers)
 	{
-		//System.out.println("Choosing builder");
-		if(b.base != null)
+		for(MoleUnit worker : mainWorkers)
 		{
-			List<MoleUnit> workers = b.base.getAllUnitsByType(Information.UnitType.WORKER);
-			for(MoleUnit worker : workers)
+			if(worker.job == Information.Job.MINERALS)
 			{
-				if(worker.job == Information.Job.MINERALS)
-				{
-					worker.job = Information.Job.CONSTRUCTION;
-					//System.out.println("Returning builder: " + worker.myUnit);
-					return worker;
-				}
+				worker.job = Information.Job.CONSTRUCTION;
+				//System.out.println("Returning builder: " + worker.myUnit);
+				return worker;
 			}
-		}
-		
-		/*for(Unit builder : builders)
-		{
-			if(builder.isCompleted() && builder.canBuild(b.type) && !builder.isConstructing())
-			{
-				myBuilder = builder;
-			}
-		}*/
-		
+		}		
 		return null;
 	}
 }

@@ -33,12 +33,10 @@ public class TestBot1 extends DefaultBWListener {
         }
         else if(unit.getType() == UnitType.Terran_SCV)
         {
-        	if(!strategy.moleContains(unit))
-        	{
-        		//System.out.println("Adding worker");
-        		//System.out.println("Num Bases: " + strategy.bases.size());
-        		strategy.addUnit(new MoleUnit(unit, Information.UnitType.WORKER));
-        	}
+    		//System.out.println("Adding worker");
+    		//System.out.println("Num Bases: " + strategy.bases.size());
+    		strategy.addUnit(new MoleUnit(unit, Information.UnitType.WORKER));
+      
         }
         else if(unit.getType() == UnitType.Terran_Marine)
         {
@@ -58,7 +56,7 @@ public class TestBot1 extends DefaultBWListener {
     public void onStart() {
         game = mirror.getGame();
         self = game.self();
-        game.setLocalSpeed(0); 
+        game.setLocalSpeed(20); 
         strategy = new StrategyManager();
             
 
@@ -79,16 +77,18 @@ public class TestBot1 extends DefaultBWListener {
         }
         
         
-        Base main = new Base();
+        //Base main = new Base();
         
         for(Unit myUnit : self.getUnits())
         {
         	//System.out.println("Iterating through units, current unit is " + myUnit.getType().toString());
         	if(myUnit.getType() == UnitType.Terran_Command_Center)
         	{
-        		main.setCC(myUnit);
-        		main.addBuilding(myUnit);
-        		main.setBaseInfo();
+        		strategy.addBuilding(myUnit);
+        	}
+        	/*else
+        	{
+        		strategy.addUnit(new MoleUnit(myUnit, Information.UnitType.WORKER));
         	}
         	
         	/*if(myUnit.getType() == UnitType.Terran_SCV)
@@ -98,8 +98,8 @@ public class TestBot1 extends DefaultBWListener {
         }
   
         
-        strategy.addBase(main);
-        strategy.buildingManager.main = main;
+        //strategy.addBase(main);
+        //strategy.buildingManager.main = main;
     }
 
     @Override

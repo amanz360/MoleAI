@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config transient="false">
+	<site enabled="true" updateable="true" policy="USER-EXCLUDE" url="platform:/base/">
+		<feature id="jbt.tools.bteditor.feature" plugin-identifier="jbt.tools.bteditor" url="features/jbt.tools.bteditor.feature_0.0.1/" version="0.0.1">
+		</feature>
+		<feature id="org.eclipse.rcp" url="features/org.eclipse.rcp_3.6.0.v20100519-9OArFKvFtsd7WLUKh-DcYTS/" version="3.6.0.v20100519-9OArFKvFtsd7WLUKh-DcYTS">
+		</feature>
+	</site>
+</config>
