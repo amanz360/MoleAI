@@ -8,7 +8,11 @@
 // ******************************************************* 
 package bts.conditions.execution;
 
+import java.util.List;
+
 import bwapi.*;
+import moleAI.MoleUnit;
+import moleAI.Squad;
 
 /** ExecutionCondition class created from MMPM condition LowDanger. */
 public class LowDanger extends
@@ -36,7 +40,7 @@ public class LowDanger extends
 		//System.out.println(this.getClass().getCanonicalName() + " spawned");
 		MoleUnit currentEntity = (MoleUnit) this.getContext().getVariable("CurrentEntity");
 		List<Unit> enemies = currentEntity.getEnemiesInRadius(400);
-		list<Unit> allies = currentEntity.getAlliesInRadius(400);
+		List<Unit> allies = currentEntity.getAlliesInRadius(400);
 		int effectiveAllyStrength = currentEntity.myUnit.getHitPoints();
 		int effectiveEnemyStrength = 0;
 		for(Unit enemy : enemies)
@@ -69,7 +73,7 @@ public class LowDanger extends
 		 * should only return Status.SUCCESS, Status.FAILURE or Status.RUNNING.
 		 * No other values are allowed.
 		 */
-		this.getContext().setVariable("GameInstance", mySquad._game);
+		this.getContext().setVariable("GameInstance", ((Squad)this.getContext().getVariable("squad"))._game);
 		if((boolean)this.getContext().getVariable("lowDanger") == true)
 		{
 			Squad mySquad = (Squad) this.getContext().getVariable("squad");

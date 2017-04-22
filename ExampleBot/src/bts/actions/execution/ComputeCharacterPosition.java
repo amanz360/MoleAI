@@ -6,19 +6,18 @@
 //                                                         
 // Generated on 04/11/2017 00:07:54
 // ******************************************************* 
-package bts.conditions.execution;
+package bts.actions.execution;
 
-import bwapi.*;
-
-/** ExecutionCondition class created from MMPM condition LowDanger. */
-public class LowDanger extends
-		jbt.execution.task.leaf.condition.ExecutionCondition {
+/** ExecutionAction class created from MMPM action ComputeCharacterPosition. */
+public class ComputeCharacterPosition extends
+		jbt.execution.task.leaf.action.ExecutionAction {
 
 	/**
-	 * Constructor. Constructs an instance of LowDanger that is able to run a
-	 * bts.conditions.LowDanger.
+	 * Constructor. Constructs an instance of ComputeCharacterPosition that is
+	 * able to run a bts.actions.ComputeCharacterPosition.
 	 */
-	public LowDanger(bts.conditions.LowDanger modelTask,
+	public ComputeCharacterPosition(
+			bts.actions.ComputeCharacterPosition modelTask,
 			jbt.execution.core.BTExecutor executor,
 			jbt.execution.core.ExecutionTask parent) {
 		super(modelTask, executor, parent);
@@ -33,34 +32,7 @@ public class LowDanger extends
 		this.getExecutor().requestInsertionIntoList(
 				jbt.execution.core.BTExecutor.BTExecutorList.TICKABLE, this);
 		/* TODO: this method's implementation must be completed. */
-		//System.out.println(this.getClass().getCanonicalName() + " spawned");
-		MoleUnit currentEntity = (MoleUnit) this.getContext().getVariable("CurrentEntity");
-		List<Unit> enemies = currentEntity.getEnemiesInRadius(400);
-		list<Unit> allies = currentEntity.getAlliesInRadius(400);
-		int effectiveAllyStrength = currentEntity.myUnit.getHitPoints();
-		int effectiveEnemyStrength = 0;
-		for(Unit enemy : enemies)
-		{
-			if(enemy.canAttack())
-			{
-				effectiveEnemyStrength += enemy.getHitPoints();
-			}
-		}
-		for(Unit ally : allies)
-		{
-			if(ally.canAttack())
-			{
-				effectiveAllyStrength += ally.getHitPoints();
-			}
-		}
-		if(effectiveEnemyStrength > 0 && effectiveAllyStrength >= effectiveEnemyStrength)
-		{
-			this.getContext().setVariable("lowDanger", true);
-		}
-		else
-		{
-			this.getContext().setVariable("lowDanger", false);
-		}
+		System.out.println(this.getClass().getCanonicalName() + " spawned");
 	}
 
 	protected jbt.execution.core.ExecutionTask.Status internalTick() {
@@ -69,18 +41,7 @@ public class LowDanger extends
 		 * should only return Status.SUCCESS, Status.FAILURE or Status.RUNNING.
 		 * No other values are allowed.
 		 */
-		this.getContext().setVariable("GameInstance", mySquad._game);
-		if((boolean)this.getContext().getVariable("lowDanger") == true)
-		{
-			Squad mySquad = (Squad) this.getContext().getVariable("squad");
-			this.getContext().setVariable("enemyTarget", mySquad.squadTarget);
-			return jbt.execution.core.ExecutionTask.Status.SUCCESS;
-		}
-		else
-		{
-			return jbt.execution.core.ExecutionTask.Status.FAILURE;
-		}
-		
+		return jbt.execution.core.ExecutionTask.Status.SUCCESS;
 	}
 
 	protected void internalTerminate() {

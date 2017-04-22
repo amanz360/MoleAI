@@ -8,13 +8,15 @@
 // ******************************************************* 
 package bts.actions.execution;
 
+import bwapi.Unit;
+
 /** ExecutionAction class created from MMPM action AttackMove. */
 public class AttackMove extends jbt.execution.task.leaf.action.ExecutionAction {
 	/**
 	 * Value of the parameter "target" in case its value is specified at
 	 * construction time. null otherwise.
 	 */
-	private float[] target;
+	private Position target;
 	/**
 	 * Location, in the context, of the parameter "target" in case its value is
 	 * not specified at construction time. null otherwise.
@@ -36,7 +38,7 @@ public class AttackMove extends jbt.execution.task.leaf.action.ExecutionAction {
 	 */
 	public AttackMove(bts.actions.AttackMove modelTask,
 			jbt.execution.core.BTExecutor executor,
-			jbt.execution.core.ExecutionTask parent, float[] target,
+			jbt.execution.core.ExecutionTask parent, Position target,
 			java.lang.String targetLoc) {
 		super(modelTask, executor, parent);
 
@@ -65,6 +67,11 @@ public class AttackMove extends jbt.execution.task.leaf.action.ExecutionAction {
 				jbt.execution.core.BTExecutor.BTExecutorList.TICKABLE, this);
 		/* TODO: this method's implementation must be completed. */
 		System.out.println(this.getClass().getCanonicalName() + " spawned");
+		MoleUnit currentEntity = (MoleUnit) this.getContext().getVariable("CurrentEntity");
+		Game game = (Game) this.getContext().getVariable("GameInstance");
+		float[] location = this.getTarget();
+		Position targetPosition = new Position(location[0], location[1]);
+		currentEntity.smartAttackMove(targetPosition, game);
 	}
 
 	protected jbt.execution.core.ExecutionTask.Status internalTick() {
@@ -73,11 +80,26 @@ public class AttackMove extends jbt.execution.task.leaf.action.ExecutionAction {
 		 * should only return Status.SUCCESS, Status.FAILURE or Status.RUNNING.
 		 * No other values are allowed.
 		 */
-		return jbt.execution.core.ExecutionTask.Status.SUCCESS;
+		MoleUnit currentEntity = (MoleUnit) this.getContext().getVariable("CurrentEntity");
+		float[] location = this.getTarget();
+		Position targetPosition = new Position(location[0], location[1]);
+		if(!currentEntity.myUnit.exists() || !currentEntity.canMove())
+		{
+			return jbt.execution.core.ExecutionTask.stats.FAILURE;
+		}
+		else if(currentEntity.getDistance(targetPosition) <= 5)
+		{
+			return jbt.execution.core.ExecutionTask.Status.SUCCESS;
+		}
+		else
+		{
+			return jbt.execution.core.ExecutionTask.Status.RUNNING;
+		}
 	}
 
 	protected void internalTerminate() {
 		/* TODO: this method's implementation must be completed. */
+		
 	}
 
 	protected void restoreState(jbt.execution.core.ITaskState state) {

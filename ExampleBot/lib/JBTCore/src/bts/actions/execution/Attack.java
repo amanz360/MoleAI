@@ -67,6 +67,11 @@ public class Attack extends jbt.execution.task.leaf.action.ExecutionAction {
 				jbt.execution.core.BTExecutor.BTExecutorList.TICKABLE, this);
 		/* TODO: this method's implementation must be completed. */
 		System.out.println(this.getClass().getCanonicalName() + " spawned");
+		
+		MoleUnit currentEntity = (MoleUnit) this.getContext().getVariable("CurrentEntity");
+		Game game = (Game) this.getContext().getVariable("GameInstance");
+		Unit myTarget = (Unit) this.getTarget();
+		currentEntity.smartAttackUnit(target, game);
 	}
 
 	protected jbt.execution.core.ExecutionTask.Status internalTick() {
@@ -75,11 +80,27 @@ public class Attack extends jbt.execution.task.leaf.action.ExecutionAction {
 		 * should only return Status.SUCCESS, Status.FAILURE or Status.RUNNING.
 		 * No other values are allowed.
 		 */
-		return jbt.execution.core.ExecutionTask.Status.SUCCESS;
+		MoleUnit currentEntity = (MoleUnit) this.getContext().getVariable("CurrentEntity");
+		Game game = (Game) this.getContext().getVariable("GameInstance");
+		Unit myTarget = (Unit) this.getTarget();
+		if(!currentEntity.myUnit.exists() || currentEntity.myUnit.getHitPoints() <= 0)
+		{
+			return jbt.execution.core.ExecutionTask.Status.FAILURE;
+		}
+		else if(myTarget.getHitPoints() <= 0 || !myTarget.exists())
+		{
+			return jbt.execution.core.ExecutionTask.Status.SUCCESS;
+		}
+		else
+		{
+			return jbt.execution.core.ExecutionTask.Status.RUNNING;
+		}
 	}
 
 	protected void internalTerminate() {
 		/* TODO: this method's implementation must be completed. */
+		MoleUnit currentEntity = (MoleUnit) this.getContext().getVariable("CurrentEntity");
+		currentEntity.myUnit.stop();
 	}
 
 	protected void restoreState(jbt.execution.core.ITaskState state) {

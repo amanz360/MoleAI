@@ -8,6 +8,8 @@
 // ******************************************************* 
 package bts.conditions.execution;
 
+import bwapi.Unit;
+
 /** ExecutionCondition class created from MMPM condition HighDanger. */
 public class HighDanger extends
 		jbt.execution.task.leaf.condition.ExecutionCondition {
@@ -32,6 +34,33 @@ public class HighDanger extends
 				jbt.execution.core.BTExecutor.BTExecutorList.TICKABLE, this);
 		/* TODO: this method's implementation must be completed. */
 		System.out.println(this.getClass().getCanonicalName() + " spawned");
+		MoleUnit currentEntity = (MoleUnit) this.getContext().getVariable("CurrentEntity");
+		List<Unit> enemies = currentEntity.getEnemiesInRadius(200);
+		list<Unit> allies = currentEntity.getAlliesInRadius(200);
+		int effectiveAllyStrength = currentEntity.myUnit.getHitPoints();
+		int effectiveEnemyStrength = 0;
+		for(Unit enemy : enemies)
+		{
+			if(enemy.canAttack())
+			{
+				effectiveEnemyStrength += enemy.getHitPoints();
+			}
+		}
+		for(Unit ally : allies)
+		{
+			if(ally.canAttack())
+			{
+				effectiveAllyStrength += ally.getHitPoints();
+			}
+		}
+		if(effectiveEnemyStrength > 0 && effectiveAllyStrength < effectiveEnemyStrength)
+		{
+			this.getContext().setVariable("highDanger", true);
+		}
+		else
+		{
+			this.getContext().setVariable("highDanger", false);
+		}
 	}
 
 	protected jbt.execution.core.ExecutionTask.Status internalTick() {
@@ -40,7 +69,14 @@ public class HighDanger extends
 		 * should only return Status.SUCCESS, Status.FAILURE or Status.RUNNING.
 		 * No other values are allowed.
 		 */
-		return jbt.execution.core.ExecutionTask.Status.SUCCESS;
+		if((boolean)this.getContext().getVariable("highDanger") == true)
+		{
+			return jbt.execution.core.ExecutionTask.Status.SUCCESS;
+		}
+		else
+		{
+			return jbt.execution.core.ExecutionTask.Status.FAILURE;
+		}
 	}
 
 	protected void internalTerminate() {

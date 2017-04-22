@@ -8,17 +8,20 @@
 // ******************************************************* 
 package bts.conditions.execution;
 
-import bwapi.*;
+import java.util.List;
 
-/** ExecutionCondition class created from MMPM condition LowDanger. */
-public class LowDanger extends
+import bwapi.Unit;
+import moleAI.MoleUnit;
+
+/** ExecutionCondition class created from MMPM condition HighDanger. */
+public class HighDanger extends
 		jbt.execution.task.leaf.condition.ExecutionCondition {
 
 	/**
-	 * Constructor. Constructs an instance of LowDanger that is able to run a
-	 * bts.conditions.LowDanger.
+	 * Constructor. Constructs an instance of HighDanger that is able to run a
+	 * bts.conditions.HighDanger.
 	 */
-	public LowDanger(bts.conditions.LowDanger modelTask,
+	public HighDanger(bts.conditions.HighDanger modelTask,
 			jbt.execution.core.BTExecutor executor,
 			jbt.execution.core.ExecutionTask parent) {
 		super(modelTask, executor, parent);
@@ -36,7 +39,7 @@ public class LowDanger extends
 		//System.out.println(this.getClass().getCanonicalName() + " spawned");
 		MoleUnit currentEntity = (MoleUnit) this.getContext().getVariable("CurrentEntity");
 		List<Unit> enemies = currentEntity.getEnemiesInRadius(400);
-		list<Unit> allies = currentEntity.getAlliesInRadius(400);
+		List<Unit> allies = currentEntity.getAlliesInRadius(400);
 		int effectiveAllyStrength = currentEntity.myUnit.getHitPoints();
 		int effectiveEnemyStrength = 0;
 		for(Unit enemy : enemies)
@@ -53,13 +56,13 @@ public class LowDanger extends
 				effectiveAllyStrength += ally.getHitPoints();
 			}
 		}
-		if(effectiveEnemyStrength > 0 && effectiveAllyStrength >= effectiveEnemyStrength)
+		if(effectiveEnemyStrength > 0 && effectiveAllyStrength < effectiveEnemyStrength)
 		{
-			this.getContext().setVariable("lowDanger", true);
+			this.getContext().setVariable("highDanger", true);
 		}
 		else
 		{
-			this.getContext().setVariable("lowDanger", false);
+			this.getContext().setVariable("highDanger", false);
 		}
 	}
 
@@ -69,18 +72,14 @@ public class LowDanger extends
 		 * should only return Status.SUCCESS, Status.FAILURE or Status.RUNNING.
 		 * No other values are allowed.
 		 */
-		this.getContext().setVariable("GameInstance", mySquad._game);
-		if((boolean)this.getContext().getVariable("lowDanger") == true)
+		if((boolean)this.getContext().getVariable("highDanger") == true)
 		{
-			Squad mySquad = (Squad) this.getContext().getVariable("squad");
-			this.getContext().setVariable("enemyTarget", mySquad.squadTarget);
 			return jbt.execution.core.ExecutionTask.Status.SUCCESS;
 		}
 		else
 		{
 			return jbt.execution.core.ExecutionTask.Status.FAILURE;
 		}
-		
 	}
 
 	protected void internalTerminate() {
