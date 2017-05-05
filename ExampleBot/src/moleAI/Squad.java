@@ -13,6 +13,7 @@ public class Squad
 	private HashSet<MoleUnit> units;
 	public Game _game;
 	public Unit squadTarget;
+	public Position rallyPosition;
 	
 	public Squad(String _name, int _capacity)
 	{
@@ -21,6 +22,7 @@ public class Squad
 		units = new HashSet<MoleUnit>();
 		squadTarget = null;
 		_game = null;
+		rallyPosition = null;
 	}
 	
 	public String getName()
@@ -52,6 +54,10 @@ public class Squad
 	{
 		for(MoleUnit unit : units)
 		{
+			if(!unit.myUnit.isCompleted() || !unit.myUnit.exists())
+			{
+				continue;
+			}
 			if(unit.behaviorExecutor.getStatus() == Status.RUNNING || unit.behaviorExecutor.getStatus() == Status.UNINITIALIZED)
 			{
 				unit.tickBehavior();
@@ -75,8 +81,12 @@ public class Squad
 	
 	public Unit closestEnemy(Game game)
 	{
+		if(units.size() == 0)
+		{
+			return null;
+		}
 		Position center = getCenterOfSquad();
-		List<Unit> enemies = game.getUnitsInRadius(center, 400);
+		List<Unit> enemies = game.getUnitsInRadius(center, 500);
 		
 		Unit closest = null;
 		for(Unit enemy : enemies)

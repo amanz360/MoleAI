@@ -68,12 +68,16 @@ public class Attack extends jbt.execution.task.leaf.action.ExecutionAction {
 		this.getExecutor().requestInsertionIntoList(
 				jbt.execution.core.BTExecutor.BTExecutorList.TICKABLE, this);
 		/* TODO: this method's implementation must be completed. */
-		//System.out.println(this.getClass().getCanonicalName() + " spawned");
+		System.out.println(this.getClass().getCanonicalName() + " spawned");
 		
 		MoleUnit currentEntity = (MoleUnit) this.getContext().getVariable("CurrentEntity");
 		Game game = (Game) this.getContext().getVariable("GameInstance");
 		Unit myTarget = (Unit) this.getTarget();
 		currentEntity.smartAttackUnit(myTarget, game);
+		if(!currentEntity.myUnit.isStimmed() && currentEntity.myUnit.canUseTech(TechType.Stim_Packs))
+		{
+			currentEntity.myUnit.useTech(TechType.Stim_Packs);
+		}
 		currentEntity.setJob(Information.Job.ATTACK);
 	}
 
@@ -96,10 +100,14 @@ public class Attack extends jbt.execution.task.leaf.action.ExecutionAction {
 		}
 		else
 		{
-			if(currentEntity.myUnit.isIdle())
+			if(currentEntity.myUnit.isIdle()) //|| currentEntity.myTarget.getUnit().getID() != myTarget.getID())
 			{
 				currentEntity.smartAttackUnit(myTarget, game);
 				currentEntity.setJob(Information.Job.ATTACK);
+			}
+			if(!currentEntity.myUnit.isStimmed() && currentEntity.myUnit.canUseTech(TechType.Stim_Packs))
+			{
+				currentEntity.myUnit.useTech(TechType.Stim_Packs);
 			}
 			return jbt.execution.core.ExecutionTask.Status.RUNNING;
 		}
@@ -108,7 +116,7 @@ public class Attack extends jbt.execution.task.leaf.action.ExecutionAction {
 	protected void internalTerminate() {
 		/* TODO: this method's implementation must be completed. */
 		MoleUnit currentEntity = (MoleUnit) this.getContext().getVariable("CurrentEntity");
-		currentEntity.myUnit.stop();
+		//currentEntity.myUnit.stop();
 	}
 
 	protected void restoreState(jbt.execution.core.ITaskState state) {

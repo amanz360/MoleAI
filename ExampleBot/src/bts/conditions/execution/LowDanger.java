@@ -37,27 +37,28 @@ public class LowDanger extends
 		this.getExecutor().requestInsertionIntoList(
 				jbt.execution.core.BTExecutor.BTExecutorList.TICKABLE, this);
 		/* TODO: this method's implementation must be completed. */
-		//System.out.println(this.getClass().getCanonicalName() + " spawned");
+		System.out.println(this.getClass().getCanonicalName() + " spawned");
 		MoleUnit currentEntity = (MoleUnit) this.getContext().getVariable("CurrentEntity");
-		List<Unit> enemies = currentEntity.getEnemiesInRadius(400);
-		List<Unit> allies = currentEntity.getAlliesInRadius(400);
+		List<Unit> enemies = currentEntity.getEnemiesInRadius(250);
+		List<Unit> allies = currentEntity.getAlliesInRadius(250);
 		int effectiveAllyStrength = currentEntity.myUnit.getHitPoints();
 		int effectiveEnemyStrength = 0;
 		for(Unit enemy : enemies)
 		{
-			if(enemy.canAttack())
+			if(enemy.getType().isBuilding())
 			{
-				effectiveEnemyStrength += enemy.getHitPoints();
+				enemies.remove(enemy);
 			}
 		}
+		/*
 		for(Unit ally : allies)
 		{
 			if(ally.canAttack())
 			{
 				effectiveAllyStrength += ally.getHitPoints();
 			}
-		}
-		if(effectiveEnemyStrength > 0 && effectiveAllyStrength >= effectiveEnemyStrength)
+		}*/
+		if(enemies.size() > 0) //&& enemies.size() <= allies.size())
 		{
 			this.getContext().setVariable("lowDanger", true);
 		}
@@ -78,6 +79,7 @@ public class LowDanger extends
 		{
 			Squad mySquad = (Squad) this.getContext().getVariable("squad");
 			this.getContext().setVariable("enemyTarget", mySquad.squadTarget);
+			//System.out.println("Low danger situation reached");
 			return jbt.execution.core.ExecutionTask.Status.SUCCESS;
 		}
 		else

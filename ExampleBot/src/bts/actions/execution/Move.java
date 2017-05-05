@@ -92,13 +92,13 @@ public class Move extends jbt.execution.task.leaf.action.ExecutionAction {
 		{
 			return jbt.execution.core.ExecutionTask.Status.FAILURE;
 		}
-		else if(currentEntity.myUnit.getDistance(targetPosition) <= 5)
+		else if(currentEntity.myUnit.getDistance(targetPosition) <= 10)
 		{
 			return jbt.execution.core.ExecutionTask.Status.SUCCESS;
 		}
 		else
 		{
-			if(currentEntity.myUnit.isIdle())
+			if(currentEntity.myUnit.isIdle() || (currentEntity.myTarget.getPosition().getX() != targetPosition.getX() || currentEntity.myTarget.getPosition().getY() != targetPosition.getY()))
 			{
 				currentEntity.smartMove(targetPosition, game);
 				currentEntity.setJob(Information.Job.REGROUP);
@@ -110,7 +110,7 @@ public class Move extends jbt.execution.task.leaf.action.ExecutionAction {
 	protected void internalTerminate() {
 		/* TODO: this method's implementation must be completed. */
 		MoleUnit currentEntity = (MoleUnit) this.getContext().getVariable("CurrentEntity");
-		currentEntity.myUnit.stop();
+		//currentEntity.myUnit.stop();
 	}
 
 	protected void restoreState(jbt.execution.core.ITaskState state) {

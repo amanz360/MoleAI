@@ -18,12 +18,24 @@ public class TestBot1 extends DefaultBWListener {
     private Error lastErr;
     private ScoutManager scouter;
     private StrategyManager strategy;
+    
 
     public void run() {
         mirror.getModule().setEventListener(this);
         mirror.startGame();
     }
+    
+    
 
+    @Override
+    public void onUnitComplete(Unit unit)
+    {
+    	if(unit.getType() == UnitType.Terran_Refinery)
+    	{
+    		strategy.addBuilding(unit);
+    	}
+    }
+    
     @Override
     public void onUnitCreate(Unit unit) {
         System.out.println("New unit discovered " + unit.getType());
@@ -57,11 +69,14 @@ public class TestBot1 extends DefaultBWListener {
     public void onStart() {
         game = mirror.getGame();
         self = game.self();
-        game.setLocalSpeed(0); 
+        game.setLocalSpeed(5); 
         strategy = new StrategyManager();
+        strategy.buildOrderManager.addItem(UnitType.Terran_Refinery, 10);
         strategy.buildOrderManager.addItem(UnitType.Terran_Barracks, 10);
+        strategy.buildOrderManager.addItem(UnitType.Terran_Academy, 12);
         strategy.buildOrderManager.addItem(UnitType.Terran_Barracks, 12);
         strategy.buildOrderManager.addItem(UnitType.Terran_Barracks, 16);
+        strategy.buildOrderManager.addItem(UnitType.Terran_Barracks, 20);
             
 
         //Use BWTA to analyze map
@@ -114,9 +129,9 @@ public class TestBot1 extends DefaultBWListener {
         game.drawTextScreen(10, 10, "Playing as " + self.getName() + " - " + self.getRace());
 
         lastErr = game.getLastError();
-        
-        strategy.update(game, self);
         strategy.drawUnitInfo(self, game);
+        strategy.update(game, self);
+        
     }
 
     public static void main(String[] args) {

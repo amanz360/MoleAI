@@ -2,7 +2,7 @@
 //                   MACHINE GENERATED CODE                
 //                       DO NOT MODIFY                     
 //                                                         
-// Generated on 04/19/2017 12:51:27
+// Generated on 04/25/2017 16:08:10
 // ******************************************************* 
 package btlibrary;
 
@@ -25,14 +25,25 @@ public class TerranMarineBTLibrary implements jbt.execution.core.IBTLibrary {
 				null,
 				new jbt.model.task.composite.ModelDynamicPriorityList(
 						null,
-						new bts.actions.Attack(new bts.conditions.LowDanger(
-								null), null, "enemyTarget"),
+						new jbt.model.task.composite.ModelDynamicPriorityList(
+								new bts.conditions.LowDanger(null),
+								new bts.actions.Attack(
+										new bts.conditions.CanAttack(null),
+										null, "enemyTarget"),
+								new jbt.model.task.composite.ModelSequence(
+										null,
+										new bts.actions.ComputeKitePosition(
+												null), new bts.actions.Move(
+												null, null, "KitePosition"))),
 						new jbt.model.task.composite.ModelSequence(
 								new bts.conditions.HighDanger(null),
 								new bts.actions.ComputeClosestBasePosition(null),
 								new bts.actions.Move(null, null,
 										"retreatPosition")),
-						new bts.actions.AttackMove(null, null, "rallyPosition")));
+						new bts.actions.AttackMove(
+								new bts.conditions.AwayFromSquad(null), null,
+								"squadCenter"), new bts.actions.AttackMove(
+								null, null, "rallyPosition")));
 
 	}
 

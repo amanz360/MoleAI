@@ -68,12 +68,12 @@ public class AttackMove extends jbt.execution.task.leaf.action.ExecutionAction {
 		this.getExecutor().requestInsertionIntoList(
 				jbt.execution.core.BTExecutor.BTExecutorList.TICKABLE, this);
 		/* TODO: this method's implementation must be completed. */
-		//System.out.println(this.getClass().getCanonicalName() + " spawned");
+		System.out.println(this.getClass().getCanonicalName() + " spawned");
 		MoleUnit currentEntity = (MoleUnit) this.getContext().getVariable("CurrentEntity");
 		Game game = (Game) this.getContext().getVariable("GameInstance");
 		//float[] location = this.getTarget();
 		Position targetPosition = this.getTarget();
-		System.out.println(targetPosition);
+		//System.out.println(targetPosition);
 		currentEntity.smartAttackMove(targetPosition, game);
 		currentEntity.setJob(Information.Job.ATTACK);
 	}
@@ -92,13 +92,13 @@ public class AttackMove extends jbt.execution.task.leaf.action.ExecutionAction {
 		{
 			return jbt.execution.core.ExecutionTask.Status.FAILURE;
 		}
-		else if(currentEntity.myUnit.getDistance(targetPosition) <= 5)
+		else if(currentEntity.myUnit.getDistance(targetPosition) <= 10)
 		{
 			return jbt.execution.core.ExecutionTask.Status.SUCCESS;
 		}
 		else
 		{
-			if(currentEntity.myUnit.isIdle())
+			if(currentEntity.myUnit.isIdle() || (currentEntity.myTarget.getPosition().getX() != targetPosition.getX() || currentEntity.myTarget.getPosition().getY() != targetPosition.getY()))
 			{
 				currentEntity.smartAttackMove(targetPosition, game);
 				currentEntity.setJob(Information.Job.ATTACK);

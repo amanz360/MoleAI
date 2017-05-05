@@ -4,25 +4,24 @@
 //                                                         
 //           ABSTRACT METHODS MUST BE IMPLEMENTED          
 //                                                         
-// Generated on 04/11/2017 00:07:54
+// Generated on 04/25/2017 16:07:41
 // ******************************************************* 
-package bts.conditions.execution;
+package bts.actions.execution;
 
-import java.util.List;
-
+import bwapi.Position;
+import bwapi.PositionOrUnit;
 import bwapi.Unit;
 import moleAI.MoleUnit;
-import moleAI.Squad;
 
-/** ExecutionCondition class created from MMPM condition HighDanger. */
-public class HighDanger extends
-		jbt.execution.task.leaf.condition.ExecutionCondition {
+/** ExecutionAction class created from MMPM action ComputeKitePosition. */
+public class ComputeKitePosition extends
+		jbt.execution.task.leaf.action.ExecutionAction {
 
 	/**
-	 * Constructor. Constructs an instance of HighDanger that is able to run a
-	 * bts.conditions.HighDanger.
+	 * Constructor. Constructs an instance of ComputeKitePosition that is able
+	 * to run a bts.actions.ComputeKitePosition.
 	 */
-	public HighDanger(bts.conditions.HighDanger modelTask,
+	public ComputeKitePosition(bts.actions.ComputeKitePosition modelTask,
 			jbt.execution.core.BTExecutor executor,
 			jbt.execution.core.ExecutionTask parent) {
 		super(modelTask, executor, parent);
@@ -39,33 +38,12 @@ public class HighDanger extends
 		/* TODO: this method's implementation must be completed. */
 		System.out.println(this.getClass().getCanonicalName() + " spawned");
 		MoleUnit currentEntity = (MoleUnit) this.getContext().getVariable("CurrentEntity");
-		List<Unit> enemies = currentEntity.getEnemiesInRadius(250);
-		List<Unit> allies = currentEntity.getAlliesInRadius(250);
-		int effectiveAllyStrength = currentEntity.myUnit.getHitPoints();
-		int effectiveEnemyStrength = 0;
-		for(Unit enemy : enemies)
-		{
-			if(enemy.getType().isBuilding())
-			{
-				enemies.remove(enemy);
-			}
-		}
-		/*
-		for(Unit ally : allies)
-		{
-			if(ally.canAttack())
-			{
-				effectiveAllyStrength += ally.getHitPoints();
-			}
-		}*/
-		if(enemies.size() > 0 && enemies.size() > allies.size())
-		{
-			this.getContext().setVariable("highDanger", false);
-		}
-		else
-		{
-			this.getContext().setVariable("highDanger", false);
-		}
+		Unit target = currentEntity.myTarget.getUnit();
+		int fleeX = currentEntity.myUnit.getPosition().getX() - target.getPosition().getX() + currentEntity.myUnit.getPosition().getX();
+		int fleeY = currentEntity.myUnit.getPosition().getY() - target.getPosition().getY() + currentEntity.myUnit.getPosition().getY();
+		Position fleePosition = new Position(fleeX, fleeY);
+		this.getContext().setVariable("KitePosition", fleePosition);
+		
 	}
 
 	protected jbt.execution.core.ExecutionTask.Status internalTick() {
@@ -74,17 +52,7 @@ public class HighDanger extends
 		 * should only return Status.SUCCESS, Status.FAILURE or Status.RUNNING.
 		 * No other values are allowed.
 		 */
-		if((boolean)this.getContext().getVariable("highDanger") == true)
-		{
-			//System.out.println("High danger situation reached");
-			this.getContext().setVariable("retreatPosition", ((Squad)this.getContext().getVariable("squad")).getCenterOfSquad());
-			return jbt.execution.core.ExecutionTask.Status.SUCCESS;
-		}
-		else
-		{
-			this.getContext().setVariable("rallyPosition", ((Squad)this.getContext().getVariable("squad")).rallyPosition);
-			return jbt.execution.core.ExecutionTask.Status.FAILURE;
-		}
+		return jbt.execution.core.ExecutionTask.Status.SUCCESS;
 	}
 
 	protected void internalTerminate() {

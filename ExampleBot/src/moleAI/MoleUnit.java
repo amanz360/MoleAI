@@ -12,7 +12,7 @@ public class MoleUnit{
 
 	public Unit myUnit;
 	IBTExecutor behaviorExecutor;
-	PositionOrUnit myTarget;
+	public PositionOrUnit myTarget;
 	Information.UnitType type;
 	Information.Job job;
 	
@@ -157,13 +157,19 @@ public class MoleUnit{
 		{
 			return null;
 		}
+		int unfinished = 0;
 		int totalX = 0, totalY = 0;
 		for(MoleUnit unit : units)
 		{
+			if(!unit.myUnit.isCompleted())
+			{
+				unfinished++;
+				continue;
+			}
 			totalX += unit.myUnit.getX();
 			totalY += unit.myUnit.getY();
 		}
-		Position center = new Position(totalX/units.size(), totalY/units.size());
+		Position center = new Position(totalX/(units.size()-unfinished), totalY/(units.size()-unfinished));
 		return center;
 	}
 	
@@ -232,7 +238,7 @@ public class MoleUnit{
 		}
 		
 		// if we have issued a command to this unit already this frame, ignore this one
-	    if (myUnit.getLastCommandFrame() >= game.getFrameCount() || myUnit.isAttackFrame())
+	    if (myUnit.getLastCommandFrame() >= game.getFrameCount())
 	    {
 	        return;
 	    }
